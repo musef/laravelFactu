@@ -17,4 +17,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
+Route::get('factulogin',function(){
+    return view('auth/factulogin');    
+});
+
+
+
 Route::get('/home', 'HomeController@index')->name('home');

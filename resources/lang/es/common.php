@@ -6,5 +6,8 @@
  * and open the template in the editor.
  */
 return [
-'welcome' => 'Bienvenido '
+    'welcome' => 'Bienvenido ',
+    'Reset Password'=> 'Resetear la contraseña',
+    'E-Mail Address'=>'Dirección de correo electrónico',
+    'Send Password Reset Link'=>'Enviar link cambio contraseña'
     ];

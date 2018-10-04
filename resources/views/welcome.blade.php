@@ -7,6 +7,9 @@
 
         <title>Laravel</title>
 
+        <script src="{{ asset('js/jquery.min.js') }}"></script>
+        <script src="{{ asset('js/intro.js') }}"></script>        
+        
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Raleway:100,600" rel="stylesheet" type="text/css">
 
@@ -62,34 +65,41 @@
             .m-b-md {
                 margin-bottom: 30px;
             }
+            a{
+                 text-decoration: none;
+                 color: #636b6f;
+            }
         </style>
     </head>
-    <body>
-        <div class="flex-center position-ref full-height">
+    <body onload="initiate()">
+        <div class="flex-center position-ref full-height" style="border: 2px solid black;margin: 4px 4px 4px 4px">
             @if (Route::has('login'))
                 <div class="top-right links">
                     @auth
                         <a href="{{ url('/home') }}">Home</a>
                     @else
-                        <a href="{{ route('login') }}">Login</a>
-                        <a href="{{ route('register') }}">Register</a>
+                        <a href="{{ url('factulogin') }}">Login</a>
                     @endauth
                 </div>
+            @else
+            <div class="top-right links">
+                <a href="{{ url('factulogin') }}">Login</a> 
+            </div>
+               
             @endif
 
-            <div class="content">
-                <div class="title m-b-md">
-                    Laravel
-                </div>
+                <div class="content">
+                    <a href="{{ url('factulogin') }}" >
+                    <div class="title m-b-md">
+                        <div id="F"></div>
+                        <div id="M"></div>
+                        <div id="S"></div>
+                        <div id="factu"></div>
+                    </div>
+                    </a>
+                </div>                
 
-                <div class="links">
-                    <a href="https://laravel.com/docs">Documentation</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
-                </div>
-            </div>
         </div>
+        
     </body>
 </html>

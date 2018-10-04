@@ -7,13 +7,14 @@
                 <div class="card-header"><h1>{{ __('Identificación') }}</h1></div>
 
                 <div class="card-body">
-
+                    <form method="POST" action="{{ route('login') }}" aria-label="{{ __('Login') }}">
+                        @csrf
 
                         
                     <div class="x_panel">
                         <div class="x_content" style="display: block;">
                           <br>
-                          <form class="form-horizontal form-label-left input_mask" method="post" action="{{url('factulogin')}}">
+                          <form class="form-horizontal form-label-left input_mask" method="post">
                               @csrf
 
                             <div class="form-group col-md-10 col-sm-10 col-xs-12">
@@ -76,6 +77,7 @@
                     </div>                        
                         
 
+                    </form>
                 </div>
             </div>
         </div>
