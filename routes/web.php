@@ -24,3 +24,7 @@ Route::get('factulogin',function(){
 
 
 Route::get('/home', 'HomeController@index')->name('home');
+
+/* **** RUTAS DE USUARIOS **** */
+Route::match(['get','post'],'userProfile','UserController@showUserProfile');
+Route::post('changeUserProfile','UserController@changeUserProfile');
