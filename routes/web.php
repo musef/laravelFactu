@@ -28,3 +28,13 @@ Route::get('/home', 'HomeController@index')->name('home');
 /* **** RUTAS DE USUARIOS **** */
 Route::match(['get','post'],'userProfile','UserController@showUserProfile');
 Route::post('changeUserProfile','UserController@changeUserProfile');
+
+/* **** RUTAS DE EMPRESA **** */
+Route::match(['get','post'],'companyProfile','CompanyController@showCompanyProfile');
+Route::post('changeCompanyProfile','CompanyController@changeCompanyProfile');
+Route::match(['get','post'],'paymentMethods/{id?}','CompanyController@listPaymentMethods');
+
+
+/* **** RUTAS DE CLIENTES **** */
+Route::match(['get','post'],'showCustomers/{id?}','CustomerController@showListCustomers');
+Route::post('createCustomer/{id?}','CustomerController@createNewCustomer');

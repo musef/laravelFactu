@@ -37,14 +37,15 @@
                       </li>
                       <li><a><i class="fa fa-industry"></i> Empresa <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/menuUploadFile')}}">Ver datos</a></li>
-                          <li><a href="{{url('/menuUploadFile')}}">Formas pago</a></li>
+                          <li><a href="{{url('/companyProfile')}}">Ver datos</a></li>
+                          <li><a href="{{url('/paymentMethods/'.Auth::guard('')->user()->idcompany)}}">Formas pago</a></li>
+                          <li><a href="{{url('/companySettings/'.Auth::guard('')->user()->idcompany)}}">Configuración</a></li>                          
                         </ul>
                       </li>
                       <li><a><i class="fa fa-users"></i> Clientes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/checkingUploadedVoFiles')}}">Menú clientes</a></li>    
-                          <li><a href="{{url('/checkPublishedCars/vo')}}">Listados</a></li>                           
+                          <li><a href="{{url('/showCustomers/'.Auth::guard('')->user()->idcompany)}}">Menú clientes</a></li>    
+                          <li><a href="{{url('/settingsList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
                         </ul>
                       </li> 
                       <li><a><i class="fa fa-wrench"></i> Trabajos<span class="fa fa-chevron-down"></span></a>
