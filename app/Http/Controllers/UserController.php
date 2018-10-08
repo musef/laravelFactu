@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
+use App\Company;
+
 
 class UserController extends Controller
 {
@@ -31,11 +33,15 @@ class UserController extends Controller
         // obtenemos un objeto user en DDBB
         $user= User::findOrFail($iduser);
         
+        // obtenemos el nombre de la compañia
+        $companyName=Company::findOrFail($user->idcompany)->company_name;
+        
         // para no mostrar la contraseña, se envía una contraseña fake
         $user->password=$this->PASSWORD_FAKE;        
         
         return view('users/userProfile')
-        ->with('user',$user);
+            ->with('companyName',$companyName)
+            ->with('user',$user);
     }
     
     

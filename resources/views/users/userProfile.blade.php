@@ -59,7 +59,14 @@
                              required minlength="8" maxlength="15"
                              title="Introduzca una contraseña entre 8 y 15. Admite solamente letras y números">
                   </div>
-                </div>                      
+                </div> 
+                <div class="form-group col-md-10 col-sm-10 col-xs-12">
+                  <label class="control-label col-md-3 col-sm-3 col-xs-12">Empresa </label>
+                  <div class="col-md-9 col-sm-9 col-xs-12">
+                      <input name='usercompany' class="form-control" type="text" value="{{$companyName}}"                              
+                             title="Nombre de la empresa a la que pertenece el usuario" readonly="readonly">
+                  </div>
+                </div>                
                 <div class="form-group col-md-10 col-sm-10 col-xs-12">
                   <label class="control-label col-md-3 col-sm-3 col-xs-12">Última actualizacion
                   </label>
