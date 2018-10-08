@@ -33,7 +33,11 @@ Route::post('changeUserProfile','UserController@changeUserProfile');
 Route::match(['get','post'],'companyProfile','CompanyController@showCompanyProfile');
 Route::post('changeCompanyProfile','CompanyController@changeCompanyProfile');
 Route::match(['get','post'],'paymentMethods/{id?}','CompanyController@listPaymentMethods');
-
+Route::post('createPaymentMethod','CompanyController@createPaymentMethod');
+Route::post('editPaymentMethod/{id?}','CompanyController@editPaymentMethod');
+Route::post('changePaymentMethod','CompanyController@changePaymentMethod');
+Route::post('recordNewPaymentMethod','CompanyController@recordNewPaymentMethod');
+Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod');
 
 /* **** RUTAS DE CLIENTES **** */
 Route::match(['get','post'],'showCustomers/{id?}','CustomerController@showListCustomers');
