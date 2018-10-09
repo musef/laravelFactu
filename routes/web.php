@@ -42,3 +42,7 @@ Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod')
 /* **** RUTAS DE CLIENTES **** */
 Route::match(['get','post'],'showCustomers/{id?}','CustomerController@showListCustomers');
 Route::post('createCustomer/{id?}','CustomerController@createNewCustomer');
+Route::post('recordNewCustomer','CustomerController@recordNewCustomer');
+Route::post('editCustomer/{id?}','CustomerController@editCustomer');
+Route::post('changeCustomer','CustomerController@changeCustomer');
+Route::post('deleteCustomer/{id?}','CustomerController@deleteCustomer');

@@ -43,9 +43,10 @@
                               <td>{{$customer->customer_city}}</td>
                               <td>{{$customer->updated_at}}</td>
                               <td><button type="submit" class="btn btn-info" formaction="{{url('editCustomer').'/'.$customer->id}}"
-                                title="Pulse para editar esta forma de pago"><i class="fa fa-calendar"></i> Ver cliente</button></td>
+                                title="Pulse para editar este cliente"><i class="fa fa-calendar"></i> Ver cliente</button></td>
                               <td><button type="submit" class="btn btn-danger" formaction="{{url('deleteCustomer').'/'.$customer->id}}"
-                                title="Pulse para eliminar esta forma de pago"><i class="fa fa-remove"></i> Eliminar </button></td>                              
+                                onclick="return confirm('¿Seguro que desea eliminar este cliente?')"
+                                title="Pulse para eliminar este cliente"><i class="fa fa-remove"></i> Eliminar </button></td>                              
                         </tr>               
                 </table>
             @endforeach

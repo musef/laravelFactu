@@ -35,9 +35,9 @@
               <form class="form-horizontal form-label-left input_mask" method="post">
                   @csrf
                 @if (isset($customer->id) && $customer->id > 0) 
-                <input type="hidden" name="customeid" value="{{$customer->id}}">
+                <input type="hidden" name="customerid" value="{{$customer->id}}">
                 @else
-                <input type="hidden" name="customeid" value="0">
+                <input type="hidden" name="customerid" value="0">
                 @endif
                 <input type="hidden" name="companyid" value="{{Auth::guard('')->user()->idcompany}}">
                 
@@ -89,7 +89,7 @@
                 <div class="form-group col-md-10 col-sm-10 col-xs-12">
                   <label class="control-label col-md-3 col-sm-3 col-xs-12">Forma de pago</label>                
                   <div class="col-md-9 col-sm-9 col-xs-12">
-                    <select name="customerpago" class="form-control">
+                    <select name="customerpayment" class="form-control">
                         <option id="method0" value="0" >Seleccione</option>                        
                         @foreach($methods as $method)
                             @if ($method->id == $customer->idmethod )
@@ -115,10 +115,10 @@
 
                         <button class="btn btn-primary" type="reset"><i class="fa fa-eraser"></i> Borrar</button>
                         @if (isset($customer->id) && $customer->id > 0)
-                        <button type="submit" class="btn btn-success"  formaction="{{url('changeCustomerProfile/'.$customer->customer_zip)}}" 
+                        <button type="submit" class="btn btn-success" formaction="{{url('changeCustomer')}}" 
                                 onclick="return confirm('¿Seguro que desea grabar los datos del formulario?')"><i class="fa fa-save"></i> Modificar</button>
                         @else
-                        <button type="submit" class="btn btn-success"  formaction="{{url('recordNewCustomer')}}" 
+                        <button type="submit" class="btn btn-success" formaction="{{url('recordNewCustomer')}}" 
                                 onclick="return confirm('¿Seguro que desea grabar los datos del formulario?')"><i class="fa fa-save"></i> Crear</button>
                         @endif
 
