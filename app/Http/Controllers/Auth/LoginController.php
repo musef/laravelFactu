@@ -33,7 +33,7 @@ class LoginController extends Controller
      * @return void
      */
     public function __construct()
-    {
+    {      
         $this->middleware('guest')->except('logout');
     }
     
@@ -45,6 +45,7 @@ class LoginController extends Controller
     */
     public function redirectToProvider()
     {
+
         return Socialite::driver('google')->redirect();
     }
     

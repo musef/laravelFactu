@@ -13,7 +13,7 @@
                     <div class="x_panel">
                         <div class="x_content" style="display: block;">
                           <br>
-                          <form class="form-horizontal form-label-left input_mask" method="post" action="{{url('factulogin')}}">
+                          <form class="form-horizontal form-label-left input_mask" method="post" action="{{url('login')}}">
                               @csrf
 
                             <div class="form-group col-md-10 col-sm-10 col-xs-12">

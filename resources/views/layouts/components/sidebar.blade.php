@@ -44,8 +44,8 @@
                       </li>
                       <li><a><i class="fa fa-users"></i> Clientes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/showCustomers/'.Auth::guard('')->user()->idcompany)}}">Menú clientes</a></li>    
-                          <li><a href="{{url('/settingsList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
+                          <li><a href="{{url('/showCustomers/'.Auth::guard('')->user()->idcompany)}}">Ficha clientes</a></li>    
+                          <li><a href="{{url('/customersList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
                         </ul>
                       </li> 
                       <li><a><i class="fa fa-wrench"></i> Trabajos<span class="fa fa-chevron-down"></span></a>

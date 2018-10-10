@@ -187,16 +187,15 @@ class CustomerController extends Controller
             
             try {
                 $customer->save();            
-                $messageOK='Cliente modificado satisfactoriamente';
-                // obtenemos las formas de pago de la empresa
-                $methods= PaymentMethod::where('idcompany',$customer->idcompany)->get();                 
+                $messageOK='Cliente modificado satisfactoriamente';                 
             } catch (Exception $ex) {
-                $customer=new Customer;
-                // obtenemos las formas de pago de la empresa
-                $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();                
+                $customer=new Customer;              
                 // mensajes
                 $messageWrong='Error: no ha sido posible modificar el cliente';
             }
+            
+            // obtenemos las formas de pago de la empresa
+            $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();  
         }
 
         return view('customers/customerProfile')
@@ -245,6 +244,74 @@ class CustomerController extends Controller
             ->with('customers',$customers)
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);        
+        
+    }
+    
+    
+    /**
+     * Esta función muestra el formulario de obtención de listados de clientes 
+     * @param type $id
+     * @return type
+     */
+    public function showCustomersListBySelection($id=0) {
+        
+        // mensajes
+        $messageWrong=$messageOK=null;
+        
+        // parametros de busqueda
+        $parameters=array('name'=>'','city'=>'','zip'=>'','selected'=>0);
+        
+        // obtenemos las formas de pago de la empresa
+        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();          
+        
+        return view('customers/customersListBySelection')
+            ->with('parameters',$parameters)
+            ->with('paymentMethods',$methods)                
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);  
+        
+    }
+    
+    /**
+     * Esta función busca en base de datos y muestra, los clientes que se han
+     * seleccionado mediante el formulario
+     * @param Request $request
+     * @return type
+     */
+    public function locateCustomersByOptions(Request $request) {
+        
+        // mensajes
+        $messageWrong=$messageOK=null;
+
+        // leemos los parametros del formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $name= clearInput($request->input('name'));
+        $city= clearInput($request->input('city'));
+        $zip= clearInput($request->input('zip'));
+        $pmethod= clearInput($request->input('paymentMethod'));        
+        
+        // parametros de busqueda
+        $parameters=array('name'=>$name,'city'=>$city,'zip'=>$zip,'selected'=>$pmethod);
+        
+        ($pmethod==0) ? $pmethod='_' : $pmethod=$pmethod;
+        
+        $customers= Customer::where([
+            ['idcompany',$idcompany],
+            ['customer_name','like','%'.$name.'%'],
+            ['customer_zip','like','%'.$zip.'%'],
+            ['customer_city','like','%'.$city.'%'],
+            ['idmethod','like', $pmethod],
+        ])->get();
+        
+        // obtenemos las formas de pago de la empresa
+        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();          
+        
+        return view('customers/customersListBySelection')
+            ->with('parameters',$parameters)
+            ->with('customers',$customers)
+            ->with('paymentMethods',$methods)                
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);         
         
     }
     

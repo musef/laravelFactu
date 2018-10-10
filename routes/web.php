@@ -46,3 +46,5 @@ Route::post('recordNewCustomer','CustomerController@recordNewCustomer');
 Route::post('editCustomer/{id?}','CustomerController@editCustomer');
 Route::post('changeCustomer','CustomerController@changeCustomer');
 Route::post('deleteCustomer/{id?}','CustomerController@deleteCustomer');
+Route::match(['get','post'],'customersList/{id?}','CustomerController@showCustomersListBySelection');
+Route::post('locateCustomersByOptions','CustomerController@locateCustomersByOptions');
