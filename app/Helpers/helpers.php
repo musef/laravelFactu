@@ -22,9 +22,80 @@
      */
     function clearInput($data) {
         
-       $forbidden=array('<','>','/','\\');
+       $forbidden=array('<','>','|','\\','script');
        
        $data= trim(str_ireplace($forbidden, '', $data));
        
        return $data;
+    }
+    
+    
+    
+    /**
+     * Esta función convierte una fecha en formato ddbb (YYYY-mm-dd hh:mm:ss)
+     * en una fecha en formato español dd-mm-AAAA
+     * 
+     * Si la fecha es corta,la devuelve sin más
+     * 
+     * @param type $sqldate
+     * @return type
+     */
+    function converterDate($sqldate) {
+        
+        if (strlen($sqldate)<10) return $sqldate;
+        
+        return substr($sqldate,8,2).substr($sqldate,4,4).substr($sqldate,0,4);
+        
+    }
+
+    /**
+     * Esta función convierte una fecha en formato ddbb (YYYY-mm-dd hh:mm:ss)
+     * en una fecha en formato español dd-mm-AAAA hh:mm:ss
+     * 
+     * Si la fecha es corta,la devuelve sin más
+     * 
+     * @param type $sqldate
+     * @return type
+     */
+    function converterDateTime($sqldate) {
+        
+        if (strlen($sqldate)<10) return $sqldate;
+        
+        return substr($sqldate,8,2).substr($sqldate,4,4).substr($sqldate,0,4).substr($sqldate,10);
+        
+    }
+    
+    
+     /**
+     * Esta función convierte una fecha en formato español (dd-mm-aaaa)
+     * en una fecha en formato DDBB yyyy-mm-dd
+     * 
+     * Si la fecha es diferente,la devuelve sin más
+     * 
+     * @param type $sqldate
+     * @return type
+     */
+    function converterDateToDDBB($sqldate) {
+        
+        if (strlen($sqldate)!=10) return $sqldate;
+        
+        return substr($sqldate,6).'-'.substr($sqldate,3,2).'-'.substr($sqldate,0,2);
+        
+    }
+    
+    /**
+     * Esta función convierte una fecha en formato español (dd-mm-aaaa hh:mm:ss)
+     * en una fecha en formato DDBB yyyy-mm-dd hh:mm:ss
+     * 
+     * Si la fecha es diferente,la devuelve sin más
+     * 
+     * @param type $sqldate
+     * @return type
+     */
+    function converterDateTimeToDDBB($sqldate) {
+        
+        if (strlen($sqldate)!=19) return $sqldate;
+        
+        return substr($sqldate,6,4).'-'.substr($sqldate,3,2).'-'.substr($sqldate,0,2).' '.substr($sqldate,10);
+        
     }

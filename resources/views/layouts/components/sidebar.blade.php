@@ -48,16 +48,16 @@
                           <li><a href="{{url('/customersList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
                         </ul>
                       </li> 
-                      <li><a><i class="fa fa-wrench"></i> Trabajos<span class="fa fa-chevron-down"></span></a>
+                      <li><a><i class="fa fa-wrench"></i> Albaranes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/checkingUploadedVnFiles')}}">Albarán</a></li>    
-                          <li><a href="{{url('/checkPublishedCars/vn')}}">Listados</a></li>                           
+                          <li><a href="{{url('/work/'.Auth::guard('')->user()->idcompany)}}">Albarán</a></li>    
+                          <li><a href="{{url('/worksList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
                         </ul>
                       </li>                           
                       <li><a><i class="fa fa-euro"></i> Facturación <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/pendingMessages')}}">Facturar</a></li>
-                          <li><a href="{{url('/answeredMessages')}}">Listados</a></li>                      
+                          <li><a href="{{url('/invoice/'.Auth::guard('')->user()->idcompany)}}">Facturar</a></li>
+                          <li><a href="{{url('/invoicesList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                      
                         </ul>
                       </li>
 

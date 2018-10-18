@@ -48,3 +48,9 @@ Route::post('changeCustomer','CustomerController@changeCustomer');
 Route::post('deleteCustomer/{id?}','CustomerController@deleteCustomer');
 Route::match(['get','post'],'customersList/{id?}','CustomerController@showCustomersListBySelection');
 Route::post('locateCustomersByOptions','CustomerController@locateCustomersByOptions');
+
+/* ***** RUTAS DE TRABAJOS ****** */
+Route::match(['get','post'],'work/{id?}','WorkController@showWork');
+Route::post('recordNewWork','WorkController@recordNewWork');
+Route::match(['get','post'],'worksList/{id?}','WorkController@showWorksMenu');
+Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');

@@ -49,6 +49,7 @@
         
         <script src="{{ asset('js/bootstrap.min.js') }}"></script>
         <script src="{{ asset('js/gentelella.js') }}"></script>
+        <script src="{{ asset('js/app_paginator.js')}}"></script>        
         
     </body>
 </html>
