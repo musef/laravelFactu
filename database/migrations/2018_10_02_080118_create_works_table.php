@@ -20,14 +20,15 @@ class CreateWorksTable extends Migration
             $table->text('work_text');
             $table->decimal('work_qtt',7,2)->default(0);
             $table->decimal('work_price',7,2)->default(0);
-            $table->decimal('work_typeiva',4,2)->default(0);
             $table->decimal('work_total',9,2)->default(0);            
             $table->unsignedInteger('idinvoice')->default(0);            
             $table->unsignedInteger('idcompany');
-            $table->unsignedInteger('idcustomer');            
+            $table->unsignedInteger('idcustomer');
+            $table->unsignedInteger('idiva');            
             $table->timestamps();
             $table->foreign('idcompany')->references('id')->on('companies'); 
-            $table->foreign('idcustomer')->references('id')->on('customers');  
+            $table->foreign('idcustomer')->references('id')->on('customers');
+            $table->foreign('idiva')->references('id')->on('iva_rates');
         });
     }
 

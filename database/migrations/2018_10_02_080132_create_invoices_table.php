@@ -14,16 +14,20 @@ class CreateInvoicesTable extends Migration
     public function up()
     {
         Schema::create('invoices', function (Blueprint $table) {
+            
             $table->increments('id');
             $table->timestamp('inv_date')->default(now());
             $table->string('inv_number',15);
             
             $table->decimal('inv_base1',8,2)->default(0);
             $table->decimal('inv_cuota1',8,2)->default(0);
+            $table->unsignedInteger('idiva1')->default(0);
             $table->decimal('inv_base2',8,2)->default(0);
             $table->decimal('inv_cuota2',8,2)->default(0);
+            $table->unsignedInteger('idiva2')->default(0);
             $table->decimal('inv_base3',8,2)->default(0);
             $table->decimal('inv_cuota3',8,2)->default(0);
+            $table->unsignedInteger('idiva3')->default(0);    
             $table->decimal('inv_total',9,2)->default(0);
                         
             $table->timestamp('inv_expiration')->default(now());
@@ -36,6 +40,10 @@ class CreateInvoicesTable extends Migration
             $table->foreign('idcompany')->references('id')->on('companies'); 
             $table->foreign('idcustomer')->references('id')->on('customers');
             $table->foreign('idmethod')->references('id')->on('payment_methods');
+            $table->foreign('idiva1')->references('id')->on('iva_rates');
+            $table->foreign('idiva2')->references('id')->on('iva_rates');
+            $table->foreign('idiva3')->references('id')->on('iva_rates');
+            
         });
     }
 
