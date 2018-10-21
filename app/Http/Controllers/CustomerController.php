@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Customer;
 use App\PaymentMethod;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
 
 
 
@@ -98,6 +99,10 @@ class CustomerController extends Controller
         } catch (Exception $ex) {
             $customer=new Customer;
             // mensajes
+            $messageWrong='Error: no ha sido posible grabar el cliente';
+        } catch (QueryException $quex) {
+            $customer=new Customer;                
+                // error Dato
             $messageWrong='Error: no ha sido posible grabar el cliente';
         }
         
@@ -192,6 +197,9 @@ class CustomerController extends Controller
                 $customer=new Customer;              
                 // mensajes
                 $messageWrong='Error: no ha sido posible modificar el cliente';
+            } catch (QueryException $quex) {
+                // error Dato
+                $messageWrong='Error: no ha sido posible modificar el cliente';
             }
             
             // obtenemos las formas de pago de la empresa
@@ -230,8 +238,11 @@ class CustomerController extends Controller
             }
             
         } catch (Exception $ex) {
-            // error DDBB
+            // error Dato
             $messageWrong='Error: no ha sido posible eliminar el cliente';
+        } catch (QueryException $quex) {
+            // error Dato
+            $messageWrong='Error: imposible eliminar el cliente porque tiene operaciones registradas en base de datos.';
         }
                 
         // obtenemos la lista de clientes

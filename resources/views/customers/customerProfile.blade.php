@@ -111,18 +111,24 @@
                 </div>
                 <div class="ln_solid"></div>
                 <div class="form-group">
-                  <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3">
+                  <div class="col-md-7 col-sm-7 col-xs-12 col-md-offset-3">
 
-                        <button class="btn btn-primary" type="reset"><i class="fa fa-eraser"></i> Borrar</button>
+                        <button class="btn btn-primary" type="reset" title="Borrar datos nuevos introducidos en formulario"
+                            ><i class="fa fa-eraser"></i> Borrar</button>
                         @if (isset($customer->id) && $customer->id > 0)
-                        <button type="submit" class="btn btn-success" formaction="{{url('changeCustomer')}}" 
+                        <button type="submit" class="btn btn-success" formaction="{{url('changeCustomer')}}" title="Modificar los datos de este cliente"
                                 onclick="return confirm('¿Seguro que desea grabar los datos del formulario?')"><i class="fa fa-save"></i> Modificar</button>
                         @else
-                        <button type="submit" class="btn btn-success" formaction="{{url('recordNewCustomer')}}" 
+                        <button type="submit" class="btn btn-success" formaction="{{url('recordNewCustomer')}}" title="Grabar los datos de este nuevo cliente"
                                 onclick="return confirm('¿Seguro que desea grabar los datos del formulario?')"><i class="fa fa-save"></i> Crear</button>
                         @endif
+                        <button class="btn btn-danger" type="submit" formaction="{{url('deleteCustomer/'.$customer->id)}}" title="Eliminar este cliente"
+                            onclick="return confirm('¿Seguro que desea eliminar este cliente? Esta acción no podrá se deshecha')">
+                            <i class="fa fa-delete"></i> Eliminar</button>
 
-
+                        <button name="createCustomer" class="btn btn-info alignright" title="Crear un nuevo cliente en la base de datos" 
+                            formaction="{{url('createCustomer/'.Auth::guard('')->user()->idcompany)}}" >
+                            <i class="fa fa-save"></i> Nuevo cliente</button>                             
                   </div>
                 </div>
 
