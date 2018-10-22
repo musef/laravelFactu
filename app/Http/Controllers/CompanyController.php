@@ -30,7 +30,7 @@ class CompanyController extends Controller
         // por diseño, solo existe una empresa
         $idcompany=1;
         
-        // obtenemos un objeto user en DDBB
+        // obtenemos un objeto company en DDBB
         $company= Company::findOrFail($idcompany);
                         
         return view('company/companyProfile')
@@ -284,5 +284,29 @@ class CompanyController extends Controller
     }    
     
     
+    /**
+     * Esta función muestra los settings de algunos elementos configurables de la 
+     * aplicación, correspondientes a la empresa con $id
+     * @param type $id
+     * @return type
+     */
+    public function settings($id=0) {
+        
+        //obtenemos el objeto usuario autenticado
+        $idcomp=Auth::guard('')->user()->idcompany;
+
+        // verificamos si el user pertenece a la compañia
+        if ($id == $idcomp) {
+            // obtenemos un objeto company en DDBB
+            $company= Company::findOrFail($id);            
+            return view('company/companySettings')
+                ->with('company',$company);            
+        } else {
+            // no pertenece
+            return ('home');
+        }
+ 
+        
+    }
 }
 
