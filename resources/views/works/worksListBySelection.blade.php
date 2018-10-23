@@ -37,7 +37,7 @@
                                         <label for="idcustomer">Cliente</label>
                                         <select name="idcustomer" class="form-control" title="Elija un cliente determinado, o todos">
                                             <option value="0">Seleccione...</option>
-                                            @if (isset($customersSel) && count($customersSel)>0)
+                                            @if (isset($customersSel) && !is_null($customersSel) && count($customersSel)>0)
                                               @foreach ($customersSel as $customer)
                                                   @if ($parameters['cust'] == $customer->id)
                                                       <option value="{{$customer->id}}" selected >{{$customer->customer_name}}</option>
@@ -108,7 +108,7 @@
                     <hr>
                     <br />
 
-                    @if (isset($works) && count($works)>0)
+                    @if (isset($works) && !is_null($works) && count($works)>0)
                         <div class="x_panel">
                             <ul class="nav navbar-right panel_toolbox">
                              <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
@@ -139,7 +139,7 @@
                                 </div>             
 
 
-                            <div class="row">
+                          <div class="row">
 
                             <div class="col-sm-12 col-md-12">
                               <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="datatable-responsive_info" style="width: 100%;" width="100%" cellspacing="0">

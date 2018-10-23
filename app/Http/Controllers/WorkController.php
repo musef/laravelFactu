@@ -4,11 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
+
 use App\Work;
 use App\Customer;
 use App\IvaRates;
 
 
+/**
+ * Esta clase controla los albaranes
+ * 
+ * SEGURIDAD: verifica la autenticación del usuario mediante middleware
+ * Controla que el usuario pertenece a la misma empresa a realizar operaciones
+ * Captura errores de DDBB y Exception
+ * Verifica los datos recibidos por formulario, tanto en create como en update
+ * En delete, borra por id + idcompany + idcustomer para evitar errores
+ */
 
 class WorkController extends Controller
 {
@@ -17,6 +28,14 @@ class WorkController extends Controller
         $this->middleware('auth');
     }
     
+    
+    /**
+     * Esta función muestra el formulario para grabar un nuevo albarán
+     * 
+     * @param Request $request
+     * @param type $id
+     * @return type
+     */
     public function showWork(Request $request, $id=0) {
     
         // obtenemos el customerid, si se ha seleccionado en el select
@@ -28,7 +47,7 @@ class WorkController extends Controller
           $customer=new Customer;  
         }
          
-        
+        // generamos un objeto albarán en blanco
         $work=new Work();
         $work->work_typeiva=21;
         $work->work_qtt=1.00;
@@ -52,8 +71,7 @@ class WorkController extends Controller
             ->with('ivaRates',$ivaRates)
             ->with('customerSelected',$customer)                
             ->with('customers',$customers)
-            ->with('work',$work);
-        
+            ->with('work',$work);        
     }
     
  
@@ -89,117 +107,115 @@ class WorkController extends Controller
         $workiva= clearInput($request->input('workiva'));
         $worktotal= clearInput($request->input('worktotal'));
         
-        // comprobaciones idoneidad de datos recibidos
-        
-        // obtenemos el tipo de iva
-        $idiva= IvaRates::where([
-            ['idcompany',$idcompany],
-            ['active',true],
-            ['rate',$workiva]
-        ])->first()->id;
-        
-        if (is_null($idiva) || $idiva===false || $idiva==0) {
-            $messageWrong='Error en tipo de IVA';
-            $error=true;
-        }        
-        
-        // comprobamos la empresa
-        if ($idcompany<1) {
-            $messageWrong='Empresa inexistente';
-            $error=true;            
-        } else {
-            // comprobamos usuario - empresa
-            if ($idcompany != Auth::guard('')->user()->idcompany) {
-                $messageWrong='Empresa no corresponde al usuario';
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == Auth::guard('')->user()->idcompany) {
+            
+            // comprobaciones idoneidad de datos recibidos
+
+            // obtenemos el tipo de iva
+            $idiva= IvaRates::where([
+                ['idcompany',$idcompany],
+                ['active',true],
+                ['rate',$workiva]
+            ])->first()->id;
+
+            if (is_null($idiva) || $idiva===false || $idiva==0) {
+                $messageWrong='Error en tipo de IVA';
+                $error=true;
+            }        
+
+            // comprobamos la empresa
+            if ($idcompany<1) {
+                $messageWrong='Empresa inexistente';
                 $error=true;            
+            }
+
+            // comprobamos el cliente
+            $cust= Customer::find($idcustomer);
+            if (is_null($cust) || $cust===false ) {
+                $messageWrong='Cliente inexistente';
+                $error=true;
+            } elseif ($cust->idcompany != $idcompany) {
+                // comprobamos cliente - empresa
+                $messageWrong='Cliente no pertenece a la empresa de facturación'.$cust->idcompany.'--'.$idcompany;
+                $error=true;             
             }            
-        }
-        
-        // comprobamos el cliente
-        $cust= Customer::find($idcustomer);
-        if (is_null($cust) || $cust===false ) {
-            $messageWrong='Cliente inexistente';
-            $error=true;
-        } elseif ($cust->idcompany != $idcompany) {
-            // comprobamos cliente - empresa
-            $messageWrong='Cliente no pertenece a la empresa de facturación'.$cust->idcompany.'--'.$idcompany;
-            $error=true;             
-        }            
-          
-        // comprobamos el concepto
-        if (strlen($workconcept)<5 || strlen($workconcept)>255) {
-            $messageWrong='Longitud de concepto inadecuada (entre 5 y 255 caracteres)';
-            $error=true;            
-        } 
 
-        if (!is_numeric($workqtt)) {
-            $messageWrong='La cantidad del albarán debe ser un número';
-            $error=true;             
-        }
+            // comprobamos el concepto
+            if (strlen($workconcept)<5 || strlen($workconcept)>255) {
+                $messageWrong='Longitud de concepto inadecuada (entre 5 y 255 caracteres)';
+                $error=true;            
+            } 
 
-        if (!is_numeric($workprice)) {
-            $messageWrong='El precio del albarán debe ser un número';
-            $error=true;             
-        }        
-        
-        if (!is_numeric($worktotal)) {
-            $messageWrong='El importe total del albarán debe ser un número';
-            $error=true;             
-        }        
+            if (!is_numeric($workqtt)) {
+                $messageWrong='La cantidad del albarán debe ser un número';
+                $error=true;             
+            }
 
+            if (!is_numeric($workprice)) {
+                $messageWrong='El precio del albarán debe ser un número';
+                $error=true;             
+            }        
 
-        // obtenemos los ivas activos
-        $ivaRates= IvaRates::where([
-            ['idcompany',$idcompany],
-            ['active',true]
-        ])->get();
-        
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcompany)
-                ->get();
-        
-        if ($error == false) {
-            // no ha habido errores, grabamos
-            $work= new Work;
-            $work->work_date= converterDateToDDBB($workdate);
-            $work->work_text=$workconcept;
-            $work->work_qtt=$workqtt;
-            $work->work_price=$workprice;
-            $work->work_total=$worktotal;
-            
-            // le damos como número de serie estandar ALB
-            $number=$this->getWorkNumber($idcompany, $workdate, 'ALB');
-            $work->work_number=$number;
-            
-            $work->idcompany=$idcompany;
-            $work->idcustomer=$idcustomer;
-            $work->idiva=$idiva;
-            $work->idinvoice=0;
-            
-            $work->save();
-            
-            $messageOK='Albarán grabado correctamente';
-        
-            return view('works/work')
-            ->with('ivaRates',$ivaRates)
-            ->with('customerSelected',$cust)                
-            ->with('customers',$customers)
-            ->with('work',$work)
-            ->with('messageOK',$messageOK)
-            ->with('messageWrong',$messageWrong);
-            
+            if (!is_numeric($worktotal)) {
+                $messageWrong='El importe total del albarán debe ser un número';
+                $error=true;             
+            }        
+
+            if ($error == false) {
+                
+                // no ha habido errores, grabamos
+                $work= new Work;
+                $work->work_date= converterDateToDDBB($workdate);
+                $work->work_text=$workconcept;
+                $work->work_qtt=$workqtt;
+                $work->work_price=$workprice;
+                $work->work_total=$worktotal;
+
+                // le damos como número de serie estandar ALB
+                $number=$this->getWorkNumber($idcompany, $workdate, 'ALB');
+                $work->work_number=$number;
+
+                $work->idcompany=$idcompany;
+                $work->idcustomer=$idcustomer;
+                $work->idiva=$idiva;
+                $work->idinvoice=0;
+
+                $work->save();
+
+                $messageOK='Albarán grabado correctamente';
+
+            }            
+           
         } else {
-            
+            $messageWrong='Empresa no corresponde al usuario';  
+            $cust= new Customer;
+            // nuevo albaran
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');            
+        }
+        
+        
+            // obtenemos los ivas activos
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcompany],
+                ['active',true]
+            ])->get();
+
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcompany)
+                    ->get();
+        
             return view('works/work')
             ->with('ivaRates',$ivaRates)
             ->with('customerSelected',$cust)                
             ->with('customers',$customers)
             ->with('work',$work)
             ->with('messageOK',$messageOK)
-            ->with('messageWrong',$messageWrong);
-        }
-
-        
+            ->with('messageWrong',$messageWrong);        
     }
     
     
@@ -209,13 +225,20 @@ class WorkController extends Controller
      * @return type
      */
     public function showWorksMenu($idcompany=0) {
-        
-                // mensajes
+
+        // mensajes
         $messageOK=$messageWrong=null;
         
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcompany)
-                ->get();        
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == Auth::guard('')->user()->idcompany) {
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcompany)
+                ->get();             
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+            $customers=null;
+        }                      
+
         
         $parameters=['cust'=>0,'state'=>0,'fechini'=>'','fechfin'=>'','amount'=>'','wknumber'=>''];
         
@@ -228,6 +251,14 @@ class WorkController extends Controller
     }
     
     
+    
+    /**
+     * Esta función muestra uno o varios trabajos en forma de listado, en función
+     * de la selección efectuada en el formulario.
+     * Los filtros del formulario son no excluyentes, y trabajan en combinación
+     * @param Request $request
+     * @return type
+     */
     public function searchWorksByOptions(Request $request) {
         
         // mensajes
@@ -295,24 +326,54 @@ class WorkController extends Controller
             $sel='LIKE';            
         }
         
-       // buscamos en DDBB
-        $works=Work::where([
-            ['works.idcustomer','LIKE',$idcustomer],
-            ['works.idcompany',$idcompany],
-            ['works.work_date','>=',$fechini],
-            ['works.work_date','<',$fechfin],
-            ['works.work_total','>=',$amount],
-            ['works.work_number','LIKE','%'.$alb.'%'],
-            ['works.idinvoice',$sel,$albstate]
-            ])
-                ->leftJoin('customers','customers.id','works.idcustomer')
-                ->leftJoin('invoices','invoices.id','works.idinvoice')
-                ->select('works.*','customers.customer_name as name','invoices.inv_number as invoicenumber')
-                ->get();
+        
+                // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == Auth::guard('')->user()->idcompany) {
 
-        // obtenemos los clientes de la empresa para mostrar en select
-        $customers= Customer::where('idcompany',$idcompany)
-                ->get();
+            try {
+
+                // buscamos en DDBB
+                $works=Work::where([
+                 ['works.idcustomer','LIKE',$idcustomer],
+                 ['works.idcompany',$idcompany],
+                 ['works.work_date','>=',$fechini],
+                 ['works.work_date','<',$fechfin],
+                 ['works.work_total','>=',$amount],
+                 ['works.work_number','LIKE','%'.$alb.'%'],
+                 ['works.idinvoice',$sel,$albstate]
+                 ])
+                     ->leftJoin('customers','customers.id','works.idcustomer')
+                     ->leftJoin('invoices','invoices.id','works.idinvoice')
+                     ->select('works.*','customers.customer_name as name','invoices.inv_number as invoicenumber')
+                     ->orderBy('works.work_number')
+                     ->get();  
+
+                // obtenemos los clientes de la empresa para mostrar en select
+                $customers= Customer::where('idcompany',$idcompany)
+                    ->get();         
+
+            } catch (Exception $ex) {
+
+                // generamos un objeto en blanco
+                $works=null;
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            } catch (QueryException $quex) {
+
+                // generamos un objeto en blanco
+                $works=null;
+                $customers=null;            
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            }            
+            
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+                // generamos un objeto en blanco
+                $works=null;
+                $customers=null;
+        }   
         
         
         return view('works/worksListBySelection')
@@ -321,9 +382,396 @@ class WorkController extends Controller
             ->with('parameters',$parameters)                
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);          
+                
+    }
+    
+    
+    /**
+     * Esta función recupera para edición el albarán seleccionado en el listado
+     * @param type $id
+     * @return type
+     */
+    public function editWork($id=0) {
         
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
+        
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == $idcomp) {
+
+            try {
+                // obtenemos el trabajo seleccionado
+                // buscamos en DDBB
+                 $work=Work::where([
+                     ['works.id',$id],
+                     ['works.idcompany',$idcomp],
+                     ])
+                    ->leftJoin('invoices','invoices.id','works.idinvoice')
+                    ->select('works.*','invoices.inv_number as invoicenumber')
+                    ->first();            
+
+                $work->work_date=converterDate($work->work_date);
+
+                // recuperamos el cliente
+                $customerid=$work->idcustomer;        
+                ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;      
+
+                $messageOK='Recuperado el albarán seleccionado';
+
+            } catch (Exception $ex) {
+
+                // generamos un objeto albarán en blanco
+                $work=new Work();
+                $work->work_typeiva=21;
+                $work->work_qtt=1.00;
+                $work->work_price=0.00;
+                $work->work_date= date('d-m-Y');
+
+                //generamos un cliente en blanco
+                $customer=new Customer;
+
+                $messageWrong='Error obteniendo el albarán';
+
+            } catch (QueryException $quex) {
+
+                // generamos un objeto albarán en blanco
+                $work=new Work();
+                $work->work_typeiva=21;
+                $work->work_qtt=1.00;
+                $work->work_price=0.00;
+                $work->work_date= date('d-m-Y');
+
+                //generamos un cliente en blanco
+                $customer=new Customer;
+
+                $messageWrong='Error en base de datos obteniendo el albarán';
+
+            }            
+            
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+            // generamos un objeto albarán en blanco
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');
+
+            //generamos un cliente en blanco
+            $customer=new Customer;
+        } 
+        
+        // obtenemos los ivas activos
+        $ivaRates= IvaRates::where([
+            ['idcompany',$idcomp],
+            ['active',true]
+        ])->get();
+        
+        // obtenemos los clientes de la empresa
+        $customers= Customer::where('idcompany',$idcomp)
+                ->get();        
+        
+        
+        return view('works/work')
+            ->with('ivaRates',$ivaRates)
+            ->with('customerSelected',$customer)                
+            ->with('customers',$customers)
+            ->with('work',$work)
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);        
         
     }
+
+    
+    /**
+     * Esta función modifica un albarán, conforme a los datos enviados por
+     * formulario.
+     * Estos datos son previamente verificados y comprobados.
+     * 
+     * @param Request $request
+     * @return type
+     */
+    public function updateWork( Request $request) {
+        
+        // control de error
+        $error=false;
+        
+        // mensajes
+        $messageOK=$messageWrong=null;                
+        
+        // lectura de parametros de formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idwork= clearInput($request->input('workid'));
+        $idcustomer= clearInput($request->input('customerid'));
+        
+        $worknumber= clearInput($request->input('worknumber'));
+        $workdate= clearInput($request->input('workdate'));
+        $workinvoice= clearInput($request->input('workinvoice'));
+        
+        $workconcept= clearInput($request->input('workconcept'));
+        
+        $workqtt= clearInput($request->input('workqtt'));
+        $workprice= clearInput($request->input('workprice'));
+        $workiva= clearInput($request->input('workiva'));
+        $worktotal= clearInput($request->input('worktotal'));
+        
+        try {
+            
+            // verificamos la correspondiencia usuario - empresa
+            if ($idcompany == Auth::guard('')->user()->idcompany) {
+             // usuario correcto: puede operar con la empresa           
+
+             // comprueba si esta facturado o no
+             // si esta facturado, no se puede modificar
+                if ($workinvoice==0) {
+                    // no esta facturado
+
+                    // comprobaciones idoneidad de datos recibidos
+
+                    // obtenemos el tipo de iva
+                    $idiva= IvaRates::where([
+                        ['idcompany',$idcompany],
+                        ['active',true],
+                        ['rate',$workiva]
+                    ])->first()->id;
+
+                    if (is_null($idiva) || $idiva===false || $idiva==0) {
+                        $messageWrong='Error en tipo de IVA';
+                        $error=true;
+                    }
+
+                    // comprobamos la empresa
+                    if ($idcompany<1) {
+                        $messageWrong='Empresa inexistente';
+                        $error=true;            
+                    }
+
+                    // comprobamos el cliente
+                    $cust= Customer::find($idcustomer);
+                    if (is_null($cust) || $cust===false ) {
+                        $messageWrong='Cliente inexistente';
+                        $error=true;
+                    } elseif ($cust->idcompany != $idcompany) {
+                        // comprobamos cliente - empresa
+                        $messageWrong='Cliente no pertenece a la empresa de facturación'.$cust->idcompany.'--'.$idcompany;
+                        $error=true;             
+                    }            
+
+                    // comprobamos el concepto
+                    if (strlen($workconcept)<5 || strlen($workconcept)>255) {
+                        $messageWrong='Longitud de concepto inadecuada (entre 5 y 255 caracteres)';
+                        $error=true;            
+                    } 
+
+                    if (!is_numeric($workqtt)) {
+                        $messageWrong='La cantidad del albarán debe ser un número';
+                        $error=true;             
+                    }
+
+                    if (!is_numeric($workprice)) {
+                        $messageWrong='El precio del albarán debe ser un número';
+                        $error=true;             
+                    }        
+
+                    if (!is_numeric($worktotal)) {
+                        $messageWrong='El importe total del albarán debe ser un número';
+                        $error=true;             
+                    }             
+
+                    if ($error == false) {
+
+                        // obtenemos el albaran para modificar
+                        $work= Work::find($idwork);
+
+                        if (!is_null($work) && $work!=false) {
+                            
+                            // no ha habido errores, grabamos
+                            $work->work_date= converterDateToDDBB($workdate);
+                            $work->work_number=$worknumber;
+                            $work->work_text=$workconcept;
+                            $work->work_qtt=$workqtt;
+                            $work->work_price=$workprice;
+                            $work->work_total=$worktotal;
+
+                            $work->idcompany=$idcompany;
+                            $work->idcustomer=$idcustomer;
+                            $work->idiva=$idiva;                    
+
+                            $work->save();
+
+                            // mensaje ok y 
+                            $messageOK='Albarán modificado correctamente';                        
+
+                            // para mostrar en pantalla !!
+                            $work->work_date=converterDate($work->work_date);                            
+                            
+                        } else {
+                            // albaran no existe
+                            $messageWrong='No ha sido posible localizar el albarán en la base de datos';
+                        }
+                    }
+                } else {
+                    // esta facturado, no se puede modificar
+                    $messageWrong='NO es posible modificar un albarán facturado';    
+                }
+
+            } else {
+                 // el usuario no corresponde a la empresa 
+                $messageWrong='Empresa no corresponde al usuario';            
+            }            
+            
+        } catch (Exception $ex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $customer=new Customer;
+            // generamos un objeto albarán en blanco
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');            
+        } catch (QueryException $quex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $customer=new Customer;
+            // generamos un objeto albarán en blanco
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');            
+        }
+        
+
+        // obtenemos los ivas activos
+        $ivaRates= IvaRates::where([
+            ['idcompany',$idcompany],
+            ['active',true]
+        ])->get();
+        
+        // obtenemos los clientes de la empresa
+        $customers= Customer::where('idcompany',$idcompany)
+                ->get();
+  
+        return view('works/work')
+        ->with('ivaRates',$ivaRates)
+        ->with('customerSelected',$cust)                
+        ->with('customers',$customers)
+        ->with('work',$work)
+        ->with('messageOK',$messageOK)
+        ->with('messageWrong',$messageWrong);
+       
+    }    
+    
+    
+    /**
+     * Esta función realiza el borrado de un albarán editado en el formulario
+     * 
+     * @param Request $request
+     * @return type
+     */
+    public function deleteWork(Request $request) {
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        // datos del formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idcustomer= clearInput($request->input('customerid'));        
+        $workid= clearInput($request->input('workid'));        
+        
+        // mensajes
+        $messageOK=$messageWrong=null;        
+        
+        try {
+            
+            // verificamos pertenencia del usuario
+            if ($idcomp==$idcompany) {
+
+                // borramos el albarán, y nos aseguramos que pertenezca
+                // a la empresa y al cliente correspondiente
+                $res= Work::where([
+                    ['works.id',$workid],
+                    ['works.idcustomer',$idcustomer],
+                    ['works.idcompany',$idcompany]                
+                ])->delete();
+
+                $messageOK='Albarán borrado correctamente';
+
+                // generamos un objeto albarán en blanco
+                $work=new Work();
+                $work->work_typeiva=21;
+                $work->work_qtt=1.00;
+                $work->work_price=0.00;
+                $work->work_date= date('d-m-Y');      
+
+                //generamos cliente en blanco
+                $customer=new Customer;            
+
+            } else {
+
+                $messageWrong='El usuario no puede realizar la opción de borrado, no pertenece a la empresa';
+
+                // obtenemos el trabajo seleccionado
+                // buscamos en DDBB
+                 $work=Work::where([
+                     ['works.id',$workid],
+                     ['works.idcompany',$idcompany],
+                     ])
+                    ->leftJoin('invoices','invoices.id','works.idinvoice')
+                    ->select('works.*','invoices.inv_number as invoicenumber')
+                    ->first();            
+
+                 // para mostrar en pantalla !!
+                $work->work_date=converterDate($work->work_date);
+
+                // recuperamos el cliente
+                $customerid=$work->idcustomer;        
+                ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;                          
+
+            }            
+            
+        } catch (Exception $ex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $customer=new Customer;
+            // generamos un objeto albarán en blanco
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');            
+        } catch (QueryException $quex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $customer=new Customer;
+            // generamos un objeto albarán en blanco
+            $work=new Work();
+            $work->work_typeiva=21;
+            $work->work_qtt=1.00;
+            $work->work_price=0.00;
+            $work->work_date= date('d-m-Y');            
+        }
+          
+        // obtenemos los ivas activos
+        $ivaRates= IvaRates::where([
+            ['idcompany',$idcomp],
+            ['active',true]
+        ])->get();
+        
+        // obtenemos los clientes de la empresa
+        $customers= Customer::where('idcompany',$idcomp)
+                ->get();          
+        
+        return view('works/work')
+            ->with('ivaRates',$ivaRates)
+            ->with('customerSelected',$customer)                
+            ->with('customers',$customers)
+            ->with('work',$work)
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);
+        
+    }
+    
     
     
     /**

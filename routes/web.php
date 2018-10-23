@@ -38,6 +38,7 @@ Route::post('editPaymentMethod/{id?}','CompanyController@editPaymentMethod');
 Route::post('changePaymentMethod','CompanyController@changePaymentMethod');
 Route::post('recordNewPaymentMethod','CompanyController@recordNewPaymentMethod');
 Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod');
+Route::match(['get','post'],'companySettings/{id?}','CompanyController@settings');
 
 /* **** RUTAS DE CLIENTES **** */
 Route::match(['get','post'],'showCustomers/{id?}','CustomerController@showListCustomers');
@@ -54,3 +55,6 @@ Route::match(['get','post'],'work/{id?}','WorkController@showWork');
 Route::post('recordNewWork','WorkController@recordNewWork');
 Route::match(['get','post'],'worksList/{id?}','WorkController@showWorksMenu');
 Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');
+Route::post('editWork/{id?}','WorkController@editWork');
+Route::post('deleteWork','WorkController@deleteWork');
+Route::post('changeWork','WorkController@updateWork');

@@ -134,7 +134,12 @@
                               <option value="0">Seleccione...</option>
                               @if (isset($ivaRates) && count($ivaRates)>0)                              
                                 @foreach ($ivaRates as $iva)
-                                    <option value="{{$iva->rate}}">{{$iva->iva_name}} {{$iva->rate}}%</option>                          
+                                    @if ($iva->id == $work->idiva)
+                                    <option value="{{$iva->rate}}" selected>{{$iva->iva_name}} {{$iva->rate}}%</option> 
+                                    @else
+                                    <option value="{{$iva->rate}}">{{$iva->iva_name}} {{$iva->rate}}%</option> 
+                                    @endif
+                                                             
                                 @endforeach
                               @endif
                           </select>
@@ -202,7 +207,7 @@
                   <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3 text-right" style="margin-top: 20px;margin-left: 20%">
 
                         <button class="btn btn-warning" type="reset" title="Borrar los datos introducidos en el albarán"
-                            onclick="return confirm('¿Seguro que desea borrar los datos del albarán?')">
+                            onclick="return confirm('¿Seguro que desea borrar los datos introducidos en el albarán?')">
                             <i class="fa fa-eraser"></i> Borrar</button>
                         <button class="btn btn-info" type="button" title="calcular el total del albarán"
                                 onclick="calculator()">
@@ -212,6 +217,12 @@
                                 title="Modificar los datos de este albarán"
                                 onclick="return confirm('¿Seguro que desea grabar los datos del albarán?')">
                             <i class="fa fa-save"></i> Modificar</button>
+                            @if (strlen($work->invoicenumber)<1)
+                            <button type="submit" class="btn btn-danger"  formaction="{{url('deleteWork')}}"
+                                    title="Eliminar definitivamente este albarán"
+                                    onclick="return confirm('¿Seguro que desea eliminar este albarán? La acción no podrá ser deshecha.')">
+                                <i class="fa fa-save"></i> Eliminar</button>
+                            @endif
                         @elseif ($customerSelected->id > 0)
                         <button type="submit" class="btn btn-success"  formaction="{{url('recordNewWork')}}"
                                 title="Grabar los datos de este albarán" onclick="return checkingForm()">
@@ -232,13 +243,12 @@
         </div>
         @endguest
         
-        <div class="col-md-8 col-sm-8 col-xs-12 col-md-offset-2">
+            {{-- Zona de mensajes --}}        
             @if (isset($messageOK) && !is_null($messageOK))
-                <p class="alert alert-success">{{$messageOK}}</p>
+            <div class="alert alert-success">{{$messageOK}}</div>
             @elseif (isset($messageWrong) && !is_null($messageWrong))
-                <p class="alert alert-alert">{{$messageWrong}}</p>
-            @endif        
-        </div>        
+            <div class="alert alert-danger">{{$messageWrong}}</div>
+            @endif      
     </div>
 </div>
 @endsection
