@@ -438,11 +438,11 @@ class CustomerController extends Controller
         ($pmethod==0) ? $pmethod='_' : $pmethod=$pmethod;
         
         // comprobamos la pertenencia del usuario a la empresa
-        if ($customer->idcompany == $idcomp) {  
+        if ($idcompany == $idcomp) {  
         
             try {
                 $customers= Customer::where([
-                    ['idcompany',$idcompany],
+                    ['idcompany',$idcomp],
                     ['customer_name','like','%'.$name.'%'],
                     ['customer_zip','like','%'.$zip.'%'],
                     ['customer_city','like','%'.$city.'%'],

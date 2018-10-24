@@ -126,9 +126,12 @@ class WorkController extends Controller
         $workprice= clearInput($request->input('workprice'));
         $workiva= clearInput($request->input('workiva'));
         $worktotal= clearInput($request->input('worktotal'));
+
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
         
         // verificamos que el usuario pertenece a la empresa
-        if ($idcompany == Auth::guard('')->user()->idcompany) {
+        if ($idcompany == $idcomp) {
             
             // comprobaciones idoneidad de datos recibidos
 
@@ -372,9 +375,11 @@ class WorkController extends Controller
             $sel='LIKE';            
         }
         
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
         
-                // verificamos que el usuario pertenece a la empresa
-        if ($idcompany == Auth::guard('')->user()->idcompany) {
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == $idcomp) {
 
             try {
 
@@ -430,9 +435,7 @@ class WorkController extends Controller
                 $works=null;
                 $customers=null;
         }   
-        
-        
-        
+                        
         return view('works/worksListBySelection')
             ->with('works',$works)
             ->with('customersSel',$customers)
@@ -456,8 +459,7 @@ class WorkController extends Controller
         // compañia del usuario
         $idcomp=Auth::guard('')->user()->idcompany;        
         
-        // verificamos que el usuario pertenece a la empresa
-        if ($idcompany == $idcomp) {
+
 
             try {
                 // obtenemos el trabajo seleccionado
@@ -470,13 +472,30 @@ class WorkController extends Controller
                     ->select('works.*','invoices.inv_number as invoicenumber')
                     ->first();            
 
-                $work->work_date=converterDate($work->work_date);
+                // verificamos que el usuario pertenece a la empresa
+                if ($work->idcompany == $idcomp) {     
+                    
+                    $work->work_date=converterDate($work->work_date);
 
-                // recuperamos el cliente
-                $customerid=$work->idcustomer;        
-                ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;      
+                    // recuperamos el cliente
+                    $customerid=$work->idcustomer;        
+                    ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;      
 
-                $messageOK='Recuperado el albarán seleccionado';
+                    $messageOK='Recuperado el albarán seleccionado';                    
+                    
+                } else {
+                    $messageWrong='Empresa no corresponde al usuario';
+                    // generamos un objeto albarán en blanco
+                    $work=new Work();
+                    $work->work_typeiva=21;
+                    $work->work_qtt=1.00;
+                    $work->work_price=0.00;
+                    $work->work_date= date('d-m-Y');
+
+                    //generamos un cliente en blanco
+                    $customer=new Customer;
+                }                        
+                 
 
             } catch (Exception $ex) {
 
@@ -507,19 +526,7 @@ class WorkController extends Controller
                 $messageWrong='Error en base de datos obteniendo el albarán';
 
             }            
-            
-        } else {
-            $messageWrong='Empresa no corresponde al usuario';
-            // generamos un objeto albarán en blanco
-            $work=new Work();
-            $work->work_typeiva=21;
-            $work->work_qtt=1.00;
-            $work->work_price=0.00;
-            $work->work_date= date('d-m-Y');
-
-            //generamos un cliente en blanco
-            $customer=new Customer;
-        } 
+             
         
         try {   
             // obtenemos los ivas activos
@@ -595,10 +602,13 @@ class WorkController extends Controller
         $workiva= clearInput($request->input('workiva'));
         $worktotal= clearInput($request->input('worktotal'));
         
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
         try {
             
             // verificamos la correspondiencia usuario - empresa
-            if ($idcompany == Auth::guard('')->user()->idcompany) {
+            if ($idcompany == $idcomp) {
              // usuario correcto: puede operar con la empresa           
 
              // comprueba si esta facturado o no
@@ -888,6 +898,80 @@ class WorkController extends Controller
         
     }
     
+    
+    /**
+     * Esta función realiza el borrado de un albarán editado en el formulario
+     * 
+     * @param Request $request
+     * @return type
+     */
+    public function deleteWorkFromList(Request $request, $idwork=0) {
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        // datos del formulario
+        $idcompany= clearInput($request->input('companyid'));               
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // mostrarlos de regreso al formulario
+        $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+            'fechfin'=> '','amount'=>0,'wknumber'=>''];         
+        
+        try {
+            
+            // verificamos pertenencia del usuario
+            if ($idcomp==$idcompany) {
+
+                // borramos el albarán, y nos aseguramos que pertenezca
+                // a la empresa correspondiente
+                $res= Work::where([
+                    ['works.id',$idwork],
+                    ['works.idcompany',$idcompany]                
+                ])->delete();
+
+                $messageOK='Albarán borrado correctamente';           
+
+            } else {
+
+                $messageWrong='El usuario no puede realizar la opción de borrado, no pertenece a la empresa';                         
+
+            }            
+            
+        } catch (Exception $ex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+           
+        } catch (QueryException $quex) {
+            $messageWrong='Error en base de datos: imposible eliminar el albarán';           
+        }
+          
+
+        
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }            
+        
+        
+        return view('works/worksListBySelection')
+            ->with('works',null)
+            ->with('customersSel',$customers)
+            ->with('parameters',$parameters)                
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);         
+        
+    }    
     
     
     /**

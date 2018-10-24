@@ -57,4 +57,5 @@ Route::match(['get','post'],'worksList','WorkController@showWorksMenu');
 Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');
 Route::post('editWork/{id?}','WorkController@editWork');
 Route::post('deleteWork','WorkController@deleteWork');
+Route::post('deleteWork/{id?}','WorkController@deleteWorkFromList');
 Route::post('changeWork','WorkController@updateWork');

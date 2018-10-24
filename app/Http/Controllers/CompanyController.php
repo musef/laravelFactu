@@ -37,58 +37,70 @@ class CompanyController extends Controller
     
     
     /**
-     * Esta función realiza el cambio de los datos del usuario del perfil,
+     * Esta función realiza el cambio de los datos de la empresa
      * según los datos del formulario.
-     * 
-     * Debe tener presente la contraseña fake
      * 
      * @param Request $request
      */
-    public function changeCompanyProfile(Request $request,$role='user') {
+    public function changeCompanyProfile(Request $request) {
         
-        
+        // mensajes
         $messageWrong=$messageOK=null;
+
+        // leemos los campos del formulario que puede cambiar
+        $idcompany=trim($request->input('companyid'));
+        $name=trim($request->input('companyname'));
+        $nif=trim($request->input('companynif'));
+        $address=trim($request->input('companyaddress'));
+        $city=trim($request->input('companycity'));
+        $zip=trim($request->input('companyzip'));            
         
+        //obtenemos el objeto usuario autenticado
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        if ($idcompany == $idcomp) {
 
-        // obtenemos el id del usuario a modificar
-        $iduser=$request->input('userid');
-        //creamos el objeto
-        $user=User::find($iduser);
-
-        if (is_null($user)) {
-            $messageWrong='Se ha producido un error modificando el usuario';
-        } else {
-            // leemos los campos del formulario que puede cambiar
-            $name=trim($request->input('username'));
-            $email=trim($request->input('useremail'));
-            $pass=trim($request->input('userpass'));
-
-            // si el nombre tiene la longitud adecuada lo cambia
-            if (strlen($name)>2 && strlen($name)<101) $user->name=$name;
-            else $messageWrong.='Longitud inadecuada de nombre. No se modifica.<br />';
-
-            if (strlen($email)>6 && strlen($email)<256) $user->email=$email;
-            else $messageWrong.='Longitud inadecuada de email. No se modifica.<br />';
-
-            //contemplamos la password fake
-            if (strlen($pass)>7 && strlen($pass)<16 && $pass!==$this->PASSWORD_FAKE) $user->password= Hash::make($pass);
-            else $messageWrong.='Longitud inadecuada de password. No se modifica.<br />';            
-
-            // grabamos
-            $result=$user->save();
+            // obtenemos la empresa a modificar
+            $company= Company::find($idcompany);
             
-            // para no mostrar la contraseña, se envía una contraseña fake a la vista
-            $user->password=$this->PASSWORD_FAKE;
-
-            if ($result===1 || $result==true) {
-                $messageOK='Los datos del formulario han sido grabados.';
+            if (!is_null($company)) {
+                // correcto
+                try {   
+                    // modificamos con los datos del formulario
+                    $company->company_name=$name;
+                    $company->company_nif=$nif;
+                    $company->company_address=$address;
+                    $company->company_city=$city;
+                    $company->company_zip=$zip;
+                    
+                    // grabamos
+                    $company->save();
+                    
+                    $messageOK='Empresa modificada correctamente';
+                    
+                } catch (Exception $ex) {
+                    // generamos un objeto en blanco
+                    $company=new Company;
+                    $messageWrong='Error modificando los datos de empresa';
+                } catch (QueryException $quex) {
+                    // generamos un objeto en blanco
+                    $company=new Company;
+                    $messageWrong='Error en base de datos modificando los datos de empresa';
+                }  
             } else {
-                $messageWrong='Error grabando los datos del usuario. No se ha grabado ningún dato.';                
-            }                
-        }
-                
-        return view('users/userProfile')
-            ->with('user',$user)
+                // la empresa no existe
+                // generamos un objeto en blanco
+                $messageWrong='Empresa inexistente';                
+            }
+            
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+            // generamos un objeto en blanco
+            $company=new Company;
+        } 
+        
+        return view('company/companyProfile')
+            ->with('company',$company)
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);            
         

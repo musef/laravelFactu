@@ -53,7 +53,7 @@
           @endif
             <div class="justify-content-center">
                 <button name="createCustomer" class="btn btn-info" title="Crear un nuevo cliente en la base de datos" 
-                       formaction="{{url('createCustomer/'.Auth::guard('')->user()->idcompany)}}" > <i class="fa fa-save"></i> Nuevo cliente</button>                      
+                       formaction="{{url('createCustomer')}}" > <i class="fa fa-save"></i> Nuevo cliente</button>                      
             </div>                        
                                   
           </form>

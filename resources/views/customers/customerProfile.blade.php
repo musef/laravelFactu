@@ -129,7 +129,7 @@
                             <i class="fa fa-delete"></i> Eliminar</button>
 
                         <button name="createCustomer" class="btn btn-info alignright" title="Crear un nuevo cliente en la base de datos" 
-                            formaction="{{url('createCustomer/'.Auth::guard('')->user()->idcompany)}}" >
+                            formaction="{{url('createCustomer')}}" >
                             <i class="fa fa-save"></i> Nuevo cliente</button>                             
                   </div>
                 </div>
