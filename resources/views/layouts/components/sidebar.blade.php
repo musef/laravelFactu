@@ -3,7 +3,7 @@
 		<div class="navbar nav_title" style="border: 0">
                     <a class="navbar-brand" href="{{ url('/home') }}" style="font-size: 17px;">
                         
-                    <img src="{{ asset('assets/img/layout/logos/logo-scroll.png') }}" style='float: left;' class="img-responsive" alt="logo Fmsfactu">
+                        <img src="{{ asset('/img/logo.png') }}" style='float: left;' class="img-responsive" width="30%" alt="logo Fmsfactu">
                     <span class='gda_title'>{{ config('app.name', 'Fmsfactu') }}</span>
                 </a>
 		</div>
