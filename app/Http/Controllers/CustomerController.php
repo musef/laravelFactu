@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Customer;
-use App\PaymentMethod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 
-
+use App\Customer;
+use App\PaymentMethod;
 
 class CustomerController extends Controller
 {
@@ -22,16 +21,26 @@ class CustomerController extends Controller
      * Esta función muestra un listado de los clientes de una empresa con idcompany
      * @return type
      */
-    public function showListCustomers($idcompany=0) {
+    public function showListCustomers() {
         
         // mensajes
         $messageWrong=$messageOK=null;
-                
-        // obtenemos la lista de clientes
-        $customers= Customer::where('idcompany',$idcompany)
-            ->orderBy('customer_name')->get();
         
-        if (count($customers)<1) $messageWrong='No hay ningún cliente en la lista';
+        // leemos la compañia del usuario
+        $idcompany=Auth::guard('')->user()->idcompany;
+                
+        try {
+            // obtenemos la lista de clientes
+            $customers= Customer::where('idcompany',$idcompany)
+                ->orderBy('customer_name')->get();  
+            if (is_null($customers) || count($customers)<1) $messageWrong='No hay ningún cliente en la lista';        
+        } catch (Exception $ex) {
+            $customers=null;
+            $messageWrong='Error leyendo la lista de clientes';
+        } catch (QueryException $quex) {
+            $customers=null;
+            $messageWrong='Error en Base de Datos leyendo la lista de clientes';
+        }
         
         return view('customers/listCustomers')
             ->with('customers',$customers)
@@ -45,7 +54,7 @@ class CustomerController extends Controller
      * @param type $idcompany
      * @return type
      */
-    public function createNewCustomer($idcompany=0) {
+    public function createNewCustomer() {
 
         // mensajes
         $messageWrong=$messageOK=null;
@@ -53,8 +62,19 @@ class CustomerController extends Controller
         // creamos un cliente en blanco
         $customer=new Customer();
         
-        // obtenemos las formas de pago de la empresa
-        $methods= PaymentMethod::where('idcompany',$idcompany)->get();
+        // leemos la compañia del usuario
+        $idcompany=Auth::guard('')->user()->idcompany;
+        
+        try {
+            // obtenemos las formas de pago de la empresa
+            $methods= PaymentMethod::where('idcompany',$idcompany)->get();            
+        } catch (Exception $ex) {
+            $customers=null;
+            $messageWrong='Error leyendo la lista de forma de pagos';
+        } catch (QueryException $quex) {
+            $customers=null;
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
+        }
         
         // mostramos formulario
         return view('customers/customerProfile')
@@ -80,35 +100,57 @@ class CustomerController extends Controller
         $zip= clearInput($request->input('customerzip'));
         $pay= clearInput($request->input('customerpayment'));
 
-        //preparamos el objeto y lo grabamos
-        $customer=new Customer;
-        $customer->idcompany=$idcompany;
-        $customer->customer_name=$name;
-        $customer->customer_nif=$nif;
-        $customer->customer_address=$address;
-        $customer->customer_city=$city;
-        $customer->customer_zip=$zip;
-        $customer->idmethod=$pay;
-
         // mensajes
-        $messageWrong=$messageOK=null;
+        $messageWrong=$messageOK=null;        
+                
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
         
-        try {
-            $customer->save();            
-            $messageOK='Cliente grabado satisfactoriamente';
-        } catch (Exception $ex) {
-            $customer=new Customer;
-            // mensajes
-            $messageWrong='Error: no ha sido posible grabar el cliente';
-        } catch (QueryException $quex) {
-            $customer=new Customer;                
-                // error Dato
-            $messageWrong='Error: no ha sido posible grabar el cliente';
-        }
-        
-        // obtenemos las formas de pago de la empresa
-        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();        
+        // comprobamos la pertenencia del usuario a la empresa
+        if ($idcompany == $idcomp) {
+            
+            try {
+                //preparamos el objeto y lo grabamos
+                $customer=new Customer;
+                $customer->idcompany=$idcompany;
+                $customer->customer_name=$name;
+                $customer->customer_nif=$nif;
+                $customer->customer_address=$address;
+                $customer->customer_city=$city;
+                $customer->customer_zip=$zip;
+                $customer->idmethod=$pay;
+                
+                $customer->save();            
+                $messageOK='Cliente grabado satisfactoriamente';
+                
+                
+            } catch (Exception $ex) {
+                $customer=new Customer;
+                // mensajes
+                $messageWrong='Error: no ha sido posible grabar el cliente';
+            } catch (QueryException $quex) {
+                $customer=new Customer;                
+                    // error Dato
+                $messageWrong='Error: no ha sido posible grabar el cliente';
+            }
 
+            try {
+                // obtenemos las formas de pago de la empresa
+                $methods= PaymentMethod::where('idcompany',$idcomp)->get();            
+            } catch (Exception $ex) {
+                $methods=null;
+                $messageWrong='Error leyendo la lista de forma de pagos';
+            } catch (QueryException $quex) {
+                $methods=null;
+                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
+            }             
+            
+        } else {
+            $messageWrong='El usuario no pertenece a la empresa';
+            $customer=new Customer;
+            $methods=null;
+        }
+                
         return view('customers/customerProfile')
             ->with('customer',$customer)
             ->with('methods',$methods)                
@@ -125,24 +167,46 @@ class CustomerController extends Controller
      * @return type
      */
     public function editCustomer($id=0) {
-        
-        // leemos el objeto
-        $customer= Customer::findOrFail($id);
 
         // mensajes
         $messageWrong=$messageOK=null;
         
+        // leemos el objeto
+        $customer= Customer::findOrFail($id);
+
         if (!is_null($customer)) {
             $messageOK='Cliente leído correctamente';            
         } else {
             $customer=new Customer;            
             // mensajes
             $messageWrong='Error: cliente inexistente';
-        }
-                        
-        // obtenemos las formas de pago de la empresa
-        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();
+        }        
+                
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
         
+        // comprobamos la pertenencia del usuario a la empresa
+        if ($customer->idcompany == $idcomp) {
+        
+            try {
+                // obtenemos las formas de pago de la empresa
+                $methods= PaymentMethod::where('idcompany',$idcomp)->get();            
+            } catch (Exception $ex) {
+                $methods=null;
+                $messageWrong='Error leyendo la lista de forma de pagos';
+            } catch (QueryException $quex) {
+                $methods=null;
+                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
+            }            
+            
+        } else {
+            // el usuario no pertenece a la empresa
+            // por tanto, no mostramos el cliente
+            $messageWrong='El usuario no pertenece a la empresa';
+            $customer=new Customer;
+            $methods=null;
+        }            
+
         return view('customers/customerProfile')
             ->with('customer',$customer)
             ->with('methods',$methods)                
@@ -169,42 +233,66 @@ class CustomerController extends Controller
         $zip= clearInput($request->input('customerzip'));
         $pay= clearInput($request->input('customerpayment'));
 
-        //obtenemos el objeto, lo modificamos y grabamos
-        $customer= Customer::find($id);
-        
         // mensajes
         $messageWrong=$messageOK=null;
+
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;         
         
+        //obtenemos el objeto, lo modificamos y grabamos
+        $customer= Customer::findOrFail($id);
+        
+        // comprobamos si existe el cliente a modificar
         if (is_null($customer)) {
             $customer=new Customer;
-            // obtenemos las formas de pago de la empresa
-            $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();                
             // mensajes
-            $messageWrong='Cliente inexistente, no ha sido posible realizar la modificación';            
+            $messageWrong='Cliente inexistente, no ha sido posible realizar la modificación';             
         } else {
-            // modificamos
-            $customer->customer_name=$name;
-            $customer->customer_nif=$nif;
-            $customer->customer_address=$address;
-            $customer->customer_city=$city;
-            $customer->customer_zip=$zip;
-            $customer->idmethod=$pay;       
-            
-            try {
-                $customer->save();            
-                $messageOK='Cliente modificado satisfactoriamente';                 
-            } catch (Exception $ex) {
-                $customer=new Customer;              
-                // mensajes
-                $messageWrong='Error: no ha sido posible modificar el cliente';
-            } catch (QueryException $quex) {
-                // error Dato
-                $messageWrong='Error: no ha sido posible modificar el cliente';
-            }
-            
-            // obtenemos las formas de pago de la empresa
-            $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();  
+            // comprobamos la pertenencia del usuario a la empresa
+            if ($customer->idcompany == $idcomp) {
+                // modificamos
+                $customer->customer_name=$name;
+                $customer->customer_nif=$nif;
+                $customer->customer_address=$address;
+                $customer->customer_city=$city;
+                $customer->customer_zip=$zip;
+                $customer->idmethod=$pay;       
+
+                try {
+                     $customer->save();            
+                     $messageOK='Cliente modificado satisfactoriamente';                 
+                } catch (Exception $ex) {
+                     $customer=new Customer;              
+                     // mensajes
+                     $messageWrong='Error: no ha sido posible modificar el cliente';
+                } catch (QueryException $quex) {
+                    $customer=new Customer;
+                     // error Dato
+                     $messageWrong='Error: no ha sido posible modificar el cliente';
+                }       
+
+            } else {
+                 // el usuario no pertenece a la empresa
+                 // por tanto, no mostramos el cliente
+                 $messageWrong='El usuario no pertenece a la empresa';
+                 $customer=new Customer;
+                 $methods=null;
+
+            }  
         }
+        
+       
+        try {
+            // obtenemos las formas de pago de la empresa
+            $methods= PaymentMethod::where('idcompany',$idcomp)->get();            
+        } catch (Exception $ex) {
+            $methods=null;
+            $messageWrong='Error leyendo la lista de forma de pagos';
+        } catch (QueryException $quex) {
+            $methods=null;
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
+        }          
+                
 
         return view('customers/customerProfile')
             ->with('customer',$customer)
@@ -223,33 +311,61 @@ class CustomerController extends Controller
     public function deleteCustomer($id=0) {
         
         // mensajes
-        $messageWrong=$messageOK=null;        
+        $messageWrong=$messageOK=null;     
         
-        try {
-            // borramos el cliente
-            $res= Customer::destroy($id);
-            
-            if ($res===true || $res==1) {
-                // todo OK
-                $messageOK='Cliente eliminado satisfactoriamente';
-            } else {
-                // cliente inexistente
-                $messageWrong='Cliente inexistente: no ha sido posible eliminar el cliente';
-            }
-            
-        } catch (Exception $ex) {
-            // error Dato
-            $messageWrong='Error: no ha sido posible eliminar el cliente';
-        } catch (QueryException $quex) {
-            // error Dato
-            $messageWrong='Error: imposible eliminar el cliente porque tiene operaciones registradas en base de datos.';
-        }
-                
-        // obtenemos la lista de clientes
-        $customers= Customer::where('idcompany',Auth::guard('')->user()->idcompany)
-            ->orderBy('customer_name')->get();
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
         
-        if (count($customers)<1) $messageWrong='No hay ningún cliente en la lista';        
+        // obtenemos el cliente
+        $customer= Customer::findOrFail($id);
+        
+        // comprobamos la pertenencia del usuario a la empresa
+        if ($customer->idcompany == $idcomp) {
+
+            try {
+                // borramos el cliente
+                $res= Customer::destroy($id);
+
+                if ($res===true || $res==1) {
+                    // todo OK
+                    $messageOK='Cliente eliminado satisfactoriamente';
+                } else {
+                    // cliente inexistente
+                    $messageWrong='Cliente inexistente: no ha sido posible eliminar el cliente';
+                }
+                              
+            } catch (Exception $ex) {
+                // error Dato
+                $messageWrong='Error: no ha sido posible eliminar el cliente';
+            } catch (QueryException $quex) {
+                // error Dato
+                $messageWrong='Error: imposible eliminar el cliente porque tiene operaciones registradas en base de datos.';
+            }            
+            
+            try {
+                // obtenemos la lista de clientes
+                $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')->get();
+        
+                if (count($customers)<1) $messageWrong='No hay ningún cliente en la lista'; 
+                              
+            } catch (Exception $ex) {
+                // error Dato
+                $messageWrong='Error: no ha sido posible obtener la lista de clientes';
+                $customers=null;
+            } catch (QueryException $quex) {
+                // error Dato
+                $messageWrong='Error de base de datos: no ha sido posible obtener la lista de clientes';
+                $customers=null;
+            }            
+
+        } else {
+             // el usuario no pertenece a la empresa
+             // por tanto, no mostramos el cliente
+            $messageWrong='El usuario no pertenece a la empresa';
+            $customers=null;
+
+        }  
         
         return view('customers/listCustomers')
             ->with('customers',$customers)
@@ -272,9 +388,21 @@ class CustomerController extends Controller
         // parametros de busqueda
         $parameters=array('name'=>'','city'=>'','zip'=>'','selected'=>0);
         
-        // obtenemos las formas de pago de la empresa
-        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();          
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
         
+        try {
+            // obtenemos las formas de pago de la empresa
+            $methods= PaymentMethod::where('idcompany', $idcomp)
+                ->get();         
+        } catch (Exception $ex) {
+            $methods=null;
+            $messageWrong='Error leyendo la lista de pagos';
+        } catch (QueryException $quex) {
+            $methods=null;
+            $messageWrong='Error en Base de Datos leyendo la lista de pagos';
+        }        
+           
         return view('customers/customersListBySelection')
             ->with('parameters',$parameters)
             ->with('paymentMethods',$methods)                
@@ -299,23 +427,54 @@ class CustomerController extends Controller
         $name= clearInput($request->input('name'));
         $city= clearInput($request->input('city'));
         $zip= clearInput($request->input('zip'));
-        $pmethod= clearInput($request->input('paymentMethod'));        
+        $pmethod= clearInput($request->input('paymentMethod'));    
+        
+        // leemos la compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
         
         // parametros de busqueda
         $parameters=array('name'=>$name,'city'=>$city,'zip'=>$zip,'selected'=>$pmethod);
         
         ($pmethod==0) ? $pmethod='_' : $pmethod=$pmethod;
         
-        $customers= Customer::where([
-            ['idcompany',$idcompany],
-            ['customer_name','like','%'.$name.'%'],
-            ['customer_zip','like','%'.$zip.'%'],
-            ['customer_city','like','%'.$city.'%'],
-            ['idmethod','like', $pmethod],
-        ])->get();
+        // comprobamos la pertenencia del usuario a la empresa
+        if ($customer->idcompany == $idcomp) {  
         
-        // obtenemos las formas de pago de la empresa
-        $methods= PaymentMethod::where('idcompany', Auth::guard('')->user()->idcompany)->get();          
+            try {
+                $customers= Customer::where([
+                    ['idcompany',$idcompany],
+                    ['customer_name','like','%'.$name.'%'],
+                    ['customer_zip','like','%'.$zip.'%'],
+                    ['customer_city','like','%'.$city.'%'],
+                    ['idmethod','like', $pmethod],
+                ])->get();
+            } catch (Exception $ex) {
+                $customers=null;
+                $messageWrong='Error buscando los clientes por formulario';
+            } catch (QueryException $quex) {
+                $customers=null;
+                $messageWrong='Error en Base de Datos buscando los clientes por formulario';
+            }             
+  
+        } else {
+             // el usuario no pertenece a la empresa
+             // por tanto, no mostramos la lista
+            $messageWrong='El usuario no pertenece a la empresa';
+            $customers=null;
+
+        }            
+        
+        
+        try {
+            // obtenemos las formas de pago de la empresa
+            $methods= PaymentMethod::where('idcompany',$idcomp)->get();            
+        } catch (Exception $ex) {
+            $methods=null;
+            $messageWrong='Error leyendo la lista de forma de pagos';
+        } catch (QueryException $quex) {
+            $methods=null;
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
+        }         
         
         return view('customers/customersListBySelection')
             ->with('parameters',$parameters)

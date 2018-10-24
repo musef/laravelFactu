@@ -48,7 +48,7 @@
                                         <label for="paymentMethod">Forma de pago</label>
                                         <select name="paymentMethod" class="form-control">
                                             <option value="0">Todos</option>
-                                         @isset($paymentMethods)
+                                         @if (isset($paymentMethods) && !is_null($paymentMethods))
                                           @foreach ($paymentMethods as $paymentMethod)
                                             @if ($parameters['selected']==$paymentMethod->id)
                                             <option value="{{$paymentMethod->id}}" selected="true">{{$paymentMethod->payment_method}}</option>
@@ -56,7 +56,7 @@
                                             <option value="{{$paymentMethod->id}}">{{$paymentMethod->payment_method}}</option>
                                             @endif
                                            @endforeach
-                                          @endisset
+                                          @endif
                                         </select>
                                     </td>                              
                                 </tr>

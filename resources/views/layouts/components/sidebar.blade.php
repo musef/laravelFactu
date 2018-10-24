@@ -38,26 +38,26 @@
                       <li><a><i class="fa fa-industry"></i> Empresa <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                           <li><a href="{{url('/companyProfile')}}">Ver datos</a></li>
-                          <li><a href="{{url('/paymentMethods/'.Auth::guard('')->user()->idcompany)}}">Formas pago</a></li>
-                          <li><a href="{{url('/companySettings/'.Auth::guard('')->user()->idcompany)}}">Configuración</a></li>                          
+                          <li><a href="{{url('/paymentMethods')}}">Formas pago</a></li>
+                          <li><a href="{{url('/companySettings')}}">Configuración</a></li>                          
                         </ul>
                       </li>
                       <li><a><i class="fa fa-users"></i> Clientes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/showCustomers/'.Auth::guard('')->user()->idcompany)}}">Ficha clientes</a></li>    
-                          <li><a href="{{url('/customersList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
+                          <li><a href="{{url('/showCustomers')}}">Ficha clientes</a></li>    
+                          <li><a href="{{url('/customersList')}}">Listados</a></li>                           
                         </ul>
                       </li> 
                       <li><a><i class="fa fa-wrench"></i> Albaranes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/work/'.Auth::guard('')->user()->idcompany)}}">Albarán</a></li>    
-                          <li><a href="{{url('/worksList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                           
+                          <li><a href="{{url('/work')}}">Albarán</a></li>    
+                          <li><a href="{{url('/worksList')}}">Listados</a></li>                           
                         </ul>
                       </li>                           
                       <li><a><i class="fa fa-euro"></i> Facturación <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/invoice/'.Auth::guard('')->user()->idcompany)}}">Facturar</a></li>
-                          <li><a href="{{url('/invoicesList/'.Auth::guard('')->user()->idcompany)}}">Listados</a></li>                      
+                          <li><a href="{{url('/invoice')}}">Facturar</a></li>
+                          <li><a href="{{url('/invoicesList')}}">Listados</a></li>                      
                         </ul>
                       </li>
 

@@ -36,7 +36,7 @@ class WorkController extends Controller
      * @param type $id
      * @return type
      */
-    public function showWork(Request $request, $id=0) {
+    public function showWork(Request $request) {
     
         // obtenemos el customerid, si se ha seleccionado en el select
         // esto no existe cuando entramos en el formulario
@@ -57,15 +57,35 @@ class WorkController extends Controller
         // compañia del usuario
         $idcomp=Auth::guard('')->user()->idcompany;
         
-        // obtenemos los ivas activos
-        $ivaRates= IvaRates::where([
-            ['idcompany',$idcomp],
-            ['active',true]
-        ])->get();
-        
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcomp)
-                ->get();
+        try {   
+            // obtenemos los ivas activos
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['active',true]
+            ])->get();                       
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error obteniendo los tipos de iva activos';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+        }
+
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }        
         
         return view('works/work')
             ->with('ivaRates',$ivaRates)
@@ -199,15 +219,35 @@ class WorkController extends Controller
         }
         
         
-            // obtenemos los ivas activos
-            $ivaRates= IvaRates::where([
-                ['idcompany',$idcompany],
-                ['active',true]
-            ])->get();
+            try {   
+                // obtenemos los ivas activos
+                $ivaRates= IvaRates::where([
+                    ['idcompany',$idcomp],
+                    ['active',true]
+                ])->get();                       
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $ivaRates=null;
+                $messageWrong='Error obteniendo los tipos de iva activos';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $ivaRates=null;
+                $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+            }
 
-            // obtenemos los clientes de la empresa
-            $customers= Customer::where('idcompany',$idcompany)
-                    ->get();
+            try {   
+                // obtenemos los clientes de la empresa
+                $customers= Customer::where('idcompany',$idcomp)
+                    ->get();                      
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            } 
         
             return view('works/work')
             ->with('ivaRates',$ivaRates)
@@ -224,21 +264,27 @@ class WorkController extends Controller
      * @param type $idcompany
      * @return type
      */
-    public function showWorksMenu($idcompany=0) {
+    public function showWorksMenu() {
 
         // mensajes
         $messageOK=$messageWrong=null;
         
         // verificamos que el usuario pertenece a la empresa
-        if ($idcompany == Auth::guard('')->user()->idcompany) {
+        $idcomp= Auth::guard('')->user()->idcompany;
+        
+        try {   
             // obtenemos los clientes de la empresa
-            $customers= Customer::where('idcompany',$idcompany)
-                ->get();             
-        } else {
-            $messageWrong='Empresa no corresponde al usuario';
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
             $customers=null;
-        }                      
-
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }                                
         
         $parameters=['cust'=>0,'state'=>0,'fechini'=>'','fechfin'=>'','amount'=>'','wknumber'=>''];
         
@@ -346,11 +392,7 @@ class WorkController extends Controller
                      ->leftJoin('invoices','invoices.id','works.idinvoice')
                      ->select('works.*','customers.customer_name as name','invoices.inv_number as invoicenumber')
                      ->orderBy('works.work_number')
-                     ->get();  
-
-                // obtenemos los clientes de la empresa para mostrar en select
-                $customers= Customer::where('idcompany',$idcompany)
-                    ->get();         
+                     ->get();         
 
             } catch (Exception $ex) {
 
@@ -366,6 +408,20 @@ class WorkController extends Controller
                 $customers=null;            
                 $messageWrong='Error en base de datos obteniendo albaranes';
 
+            }     
+            
+            try {   
+                // obtenemos los clientes de la empresa
+                $customers= Customer::where('idcompany',$idcomp)
+                    ->get();                      
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }            
             
         } else {
@@ -374,6 +430,7 @@ class WorkController extends Controller
                 $works=null;
                 $customers=null;
         }   
+        
         
         
         return view('works/worksListBySelection')
@@ -464,15 +521,35 @@ class WorkController extends Controller
             $customer=new Customer;
         } 
         
-        // obtenemos los ivas activos
-        $ivaRates= IvaRates::where([
-            ['idcompany',$idcomp],
-            ['active',true]
-        ])->get();
+        try {   
+            // obtenemos los ivas activos
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['active',true]
+            ])->get();                       
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error obteniendo los tipos de iva activos';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+        }
         
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcomp)
-                ->get();        
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }          
         
         
         return view('works/work')
@@ -643,16 +720,35 @@ class WorkController extends Controller
             $work->work_date= date('d-m-Y');            
         }
         
-
-        // obtenemos los ivas activos
-        $ivaRates= IvaRates::where([
-            ['idcompany',$idcompany],
-            ['active',true]
-        ])->get();
+        try {   
+            // obtenemos los ivas activos
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['active',true]
+            ])->get();                       
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error obteniendo los tipos de iva activos';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+        }
         
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcompany)
-                ->get();
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }  
   
         return view('works/work')
         ->with('ivaRates',$ivaRates)
@@ -752,15 +848,35 @@ class WorkController extends Controller
             $work->work_date= date('d-m-Y');            
         }
           
-        // obtenemos los ivas activos
-        $ivaRates= IvaRates::where([
-            ['idcompany',$idcomp],
-            ['active',true]
-        ])->get();
+        try {   
+            // obtenemos los ivas activos
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['active',true]
+            ])->get();                       
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error obteniendo los tipos de iva activos';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $ivaRates=null;
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+        }
         
-        // obtenemos los clientes de la empresa
-        $customers= Customer::where('idcompany',$idcomp)
-                ->get();          
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }            
         
         return view('works/work')
             ->with('ivaRates',$ivaRates)

@@ -24,17 +24,15 @@ class CompanyController extends Controller
      */    
     public function showCompanyProfile() 
     {
-        //obtenemos el objeto usuario autenticado
-        $iduser=Auth::guard('')->user()->id;
         
-        // por diseño, solo existe una empresa
-        $idcompany=1;
+        // por diseño, cada usuario solo puede acceder a una empresa
+        $idcompany=Auth::guard('')->user()->idcompany;
         
         // obtenemos un objeto company en DDBB
         $company= Company::findOrFail($idcompany);
                         
         return view('company/companyProfile')
-        ->with('company',$company);
+            ->with('company',$company);
     }
     
     
@@ -101,10 +99,13 @@ class CompanyController extends Controller
      * Esta función lista los métodos de pagos de una compañia determinad por idcompany
      * @param type $idcompany
      */
-    public function listPaymentMethods($idcompany=0) {
+    public function listPaymentMethods() {
+        
+        //obtenemos el objeto usuario autenticado
+        $idcomp=Auth::guard('')->user()->idcompany;
         
         // obtenemos todos los métodos de pago
-        $list= PaymentMethod::where('idcompany',$idcompany)->get();
+        $list= PaymentMethod::where('idcompany',$idcomp)->get();
         
         //mensajes
         $messageOK=$messageWrong=null;
@@ -290,23 +291,18 @@ class CompanyController extends Controller
      * @param type $id
      * @return type
      */
-    public function settings($id=0) {
+    public function settings() {
         
         //obtenemos el objeto usuario autenticado
         $idcomp=Auth::guard('')->user()->idcompany;
 
-        // verificamos si el user pertenece a la compañia
-        if ($id == $idcomp) {
-            // obtenemos un objeto company en DDBB
-            $company= Company::findOrFail($id);            
-            return view('company/companySettings')
-                ->with('company',$company);            
-        } else {
-            // no pertenece
-            return ('home');
-        }
- 
+        // obtenemos un objeto company en DDBB
+        $company= Company::findOrFail($idcomp); 
         
+        // mostramos la vista
+        return view('company/companySettings')
+            ->with('company',$company);            
+   
     }
 }
 

@@ -90,14 +90,16 @@
                   <label class="control-label col-md-3 col-sm-3 col-xs-12">Forma de pago</label>                
                   <div class="col-md-9 col-sm-9 col-xs-12">
                     <select name="customerpayment" class="form-control">
-                        <option id="method0" value="0" >Seleccione</option>                        
-                        @foreach($methods as $method)
-                            @if ($method->id == $customer->idmethod )
-                            <option id="method{{$method->id}}" value="{{$method->id}}" selected >{{$method->payment_method}}</option>
-                            @else
-                            <option id="method{{$method->id}}" value="{{$method->id}}" >{{$method->payment_method}}</option>
-                            @endif                        
-                        @endforeach
+                        <option id="method0" value="0" >Seleccione</option>
+                        @if (isset($methods) && !is_null($methods))
+                            @foreach($methods as $method)
+                                @if ($method->id == $customer->idmethod )
+                                <option id="method{{$method->id}}" value="{{$method->id}}" selected >{{$method->payment_method}}</option>
+                                @else
+                                <option id="method{{$method->id}}" value="{{$method->id}}" >{{$method->payment_method}}</option>
+                                @endif                        
+                            @endforeach
+                        @endif
                     </select>
                   </div>
                 </div>

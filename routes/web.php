@@ -32,28 +32,28 @@ Route::post('changeUserProfile','UserController@changeUserProfile');
 /* **** RUTAS DE EMPRESA **** */
 Route::match(['get','post'],'companyProfile','CompanyController@showCompanyProfile');
 Route::post('changeCompanyProfile','CompanyController@changeCompanyProfile');
-Route::match(['get','post'],'paymentMethods/{id?}','CompanyController@listPaymentMethods');
+Route::match(['get','post'],'paymentMethods','CompanyController@listPaymentMethods');
 Route::post('createPaymentMethod','CompanyController@createPaymentMethod');
 Route::post('editPaymentMethod/{id?}','CompanyController@editPaymentMethod');
 Route::post('changePaymentMethod','CompanyController@changePaymentMethod');
 Route::post('recordNewPaymentMethod','CompanyController@recordNewPaymentMethod');
 Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod');
-Route::match(['get','post'],'companySettings/{id?}','CompanyController@settings');
+Route::match(['get','post'],'companySettings','CompanyController@settings');
 
 /* **** RUTAS DE CLIENTES **** */
-Route::match(['get','post'],'showCustomers/{id?}','CustomerController@showListCustomers');
-Route::post('createCustomer/{id?}','CustomerController@createNewCustomer');
+Route::match(['get','post'],'showCustomers','CustomerController@showListCustomers');
+Route::post('createCustomer','CustomerController@createNewCustomer');
 Route::post('recordNewCustomer','CustomerController@recordNewCustomer');
 Route::post('editCustomer/{id?}','CustomerController@editCustomer');
 Route::post('changeCustomer','CustomerController@changeCustomer');
 Route::post('deleteCustomer/{id?}','CustomerController@deleteCustomer');
-Route::match(['get','post'],'customersList/{id?}','CustomerController@showCustomersListBySelection');
+Route::match(['get','post'],'customersList','CustomerController@showCustomersListBySelection');
 Route::post('locateCustomersByOptions','CustomerController@locateCustomersByOptions');
 
 /* ***** RUTAS DE TRABAJOS ****** */
-Route::match(['get','post'],'work/{id?}','WorkController@showWork');
+Route::match(['get','post'],'work','WorkController@showWork');
 Route::post('recordNewWork','WorkController@recordNewWork');
-Route::match(['get','post'],'worksList/{id?}','WorkController@showWorksMenu');
+Route::match(['get','post'],'worksList','WorkController@showWorksMenu');
 Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');
 Route::post('editWork/{id?}','WorkController@editWork');
 Route::post('deleteWork','WorkController@deleteWork');
