@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
+
 use App\User;
 use App\Company;
 
@@ -53,7 +55,7 @@ class UserController extends Controller
      * 
      * @param Request $request
      */
-    public function changeUserProfile(Request $request,$role='user') {
+    public function changeUserProfile(Request $request) {
         
         
         $messageWrong=$messageOK='';
@@ -61,12 +63,15 @@ class UserController extends Controller
 
         // obtenemos el id del usuario a modificar
         $iduser=$request->input('userid');
-        //creamos el objeto
+        //obtenemos el objeto
         $user=User::find($iduser);
 
         if (is_null($user)) {
             $messageWrong='Se ha producido un error modificando el usuario';
+            $companyName='';
+            $user=new User;            
         } else {
+            
             // leemos los campos del formulario que puede cambiar
             $name=trim($request->input('username'));
             $email=trim($request->input('useremail'));
@@ -83,8 +88,28 @@ class UserController extends Controller
             if (strlen($pass)>7 && strlen($pass)<16 && $pass!==$this->PASSWORD_FAKE) $user->password= Hash::make($pass);
             else $messageWrong.='Longitud inadecuada de password. No se modifica.<br />';            
 
-            // grabamos
-            $result=$user->save();
+            try {
+            
+                // grabamos
+                $result=$user->save();     
+                
+            } catch (Exception $ex) {
+                $user=new User;
+                $messageWrong='Error grabando los datos del usuario. No se ha grabado ningún dato.';                 
+            } catch (QueryException $quex) {
+                $user=new User;
+                $messageWrong='Error de base de datos grabando los datos del usuario.';
+            }
+
+            try {
+                // obtenemos el nombre de la compañia
+                $companyName=Company::find($user->idcompany)->company_name;                
+            } catch (Exception $ex) {
+                $companyName='';
+
+            } catch (QueryException $quex) {
+                $companyName='';                
+            }
             
             // para no mostrar la contraseña, se envía una contraseña fake a la vista
             $user->password=$this->PASSWORD_FAKE;
@@ -98,6 +123,7 @@ class UserController extends Controller
                 
         return view('users/userProfile')
             ->with('user',$user)
+            ->with('companyName',$companyName)                
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);            
         
