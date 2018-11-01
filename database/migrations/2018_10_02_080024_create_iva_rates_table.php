@@ -19,6 +19,7 @@ class CreateIvaRatesTable extends Migration
             $table->string('iva_name',200);
             $table->decimal('rate',4,2)->default(0);
             $table->boolean('active')->default(true);
+            $table->boolean('type')->default(3);
             $table->timestamps();
             $table->foreign('idcompany')->references('id')->on('companies');            
         });

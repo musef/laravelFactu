@@ -39,6 +39,12 @@ Route::post('changePaymentMethod','CompanyController@changePaymentMethod');
 Route::post('recordNewPaymentMethod','CompanyController@recordNewPaymentMethod');
 Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod');
 Route::match(['get','post'],'companySettings','CompanyController@settings');
+Route::match(['get','post'],'ivaTypes','IvaController@showIvaTypes');
+Route::post('editIva/{id?}','IvaController@showIva');
+Route::post('createIva','IvaController@showIva');
+Route::post('deleteIva/{id?}','IvaController@deleteIva');
+Route::post('recordNewIva','IvaController@recordNewIva');
+Route::post('changeIva','IvaController@updateIva');
 
 /* **** RUTAS DE CLIENTES **** */
 Route::match(['get','post'],'showCustomers','CustomerController@showListCustomers');
@@ -59,3 +65,8 @@ Route::post('editWork/{id?}','WorkController@editWork');
 Route::post('deleteWork','WorkController@deleteWork');
 Route::post('deleteWork/{id?}','WorkController@deleteWorkFromList');
 Route::post('changeWork','WorkController@updateWork');
+
+/* ***** RUTAS DE FACTURAS ****** */
+Route::match(['get','post'],'invoicesMenu','InvoiceController@invoicesMenu');
+Route::post('worksList','InvoiceController@showWorksList');
+Route::post('generateInvoices','InvoiceController@createInvoices');

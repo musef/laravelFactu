@@ -39,6 +39,7 @@
                         <ul class="nav child_menu">
                           <li><a href="{{url('/companyProfile')}}">Ver datos</a></li>
                           <li><a href="{{url('/paymentMethods')}}">Formas pago</a></li>
+                          <li><a href="{{url('/ivaTypes')}}">Tipos de IVA</a></li>
                           <li><a href="{{url('/companySettings')}}">Configuración</a></li>                          
                         </ul>
                       </li>
@@ -56,7 +57,7 @@
                       </li>                           
                       <li><a><i class="fa fa-euro"></i> Facturación <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/invoice')}}">Facturar</a></li>
+                          <li><a href="{{url('/invoicesMenu')}}">Facturar</a></li>
                           <li><a href="{{url('/invoicesList')}}">Listados</a></li>                      
                         </ul>
                       </li>
