@@ -70,3 +70,7 @@ Route::post('changeWork','WorkController@updateWork');
 Route::match(['get','post'],'invoicesMenu','InvoiceController@invoicesMenu');
 Route::post('worksList','InvoiceController@showWorksList');
 Route::post('generateInvoices','InvoiceController@createInvoices');
+Route::match(['get','post'],'invoicesList/{mess?}','InvoiceController@showInvoicesMenu');
+Route::post('searchInvoices','InvoiceController@invoicesList');
+Route::post('showInvoice/{id?}','InvoiceController@showInvoice');
+Route::post('deleteInvoice','InvoiceController@deleteInvoice');

@@ -18,16 +18,19 @@ class CreateInvoicesTable extends Migration
             $table->increments('id');
             $table->timestamp('inv_date')->default(now());
             $table->string('inv_number',15);
-            
+
+            $table->decimal('inv_base0',8,2)->default(0);
+            $table->decimal('inv_cuota0',8,2)->default(0);
+            $table->unsignedInteger('idiva0')->default(1);            
             $table->decimal('inv_base1',8,2)->default(0);
             $table->decimal('inv_cuota1',8,2)->default(0);
-            $table->unsignedInteger('idiva1')->default(0);
+            $table->unsignedInteger('idiva1')->default(1);
             $table->decimal('inv_base2',8,2)->default(0);
             $table->decimal('inv_cuota2',8,2)->default(0);
-            $table->unsignedInteger('idiva2')->default(0);
+            $table->unsignedInteger('idiva2')->default(1);
             $table->decimal('inv_base3',8,2)->default(0);
             $table->decimal('inv_cuota3',8,2)->default(0);
-            $table->unsignedInteger('idiva3')->default(0);    
+            $table->unsignedInteger('idiva3')->default(1);    
             $table->decimal('inv_total',9,2)->default(0);
                         
             $table->timestamp('inv_expiration')->default(now());
