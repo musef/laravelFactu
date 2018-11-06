@@ -95,7 +95,7 @@
                                         <button type="reset" class="btn btn-info" title="Borrar los datos del formulario" >
                                             <i class='fa fa-eraser'></i> Borrar</button>
 
-                                        <button type="submit" class="btn btn-info" title="Buscar vehículo" formaction="{{url('searchWorksByOptions')}}" >
+                                        <button type="submit" class="btn btn-info" title="Buscar albaranes" formaction="{{url('searchWorksByOptions')}}" >
                                             <i class="fa fa-search-minus"></i> Buscar</button>
                                     </td>                                
                                 </tr>                                                                      
@@ -139,56 +139,68 @@
                                 </div>             
 
 
-                          <div class="row">
+                                <div class="row">
 
-                            <div class="col-sm-12 col-md-12">
-                              <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="datatable-responsive_info" style="width: 100%;" width="100%" cellspacing="0">
-                                <thead>
-                                    <tr role="row">
-                                        <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width:35%" >Nombre</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Fecha</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 15%;" >Número</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Facturado</th>
-                                        <th class="text-right" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Importe</th>
-                                        <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;"></th>
-                                        <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" ></th> 
-                                    </tr>
-                                </thead> 
-                                  <tbody id="bodytable">
-                                    @foreach ($works as $work)
-                                          @if ($loop->iteration > 10)
-                                            {{-- utilizamos loop para el id del tr y para habilitar solamente los 10 primeros registros --}}
-                                          <tr id="{{($loop->iteration)}}" style="display:none">                                               
-                                          @else
-                                          <tr id="{{($loop->iteration)}}">                                  
-                                          @endif
-                                            <td>{{$work->name}}</td>
-                                            <td class="text-center">{{converterDate($work->work_date)}}</td>
-                                            <td class="text-center">{{$work->work_number}}</td>
-                                            <td class="text-center">{{$work->invoicenumber}}</td>
-                                            <td class="text-right">{{$work->work_total}}</td>
-                                            <td class="text-center"><button type="submit" class="btn btn-info" formaction="{{url('editWork').'/'.$work->id}}"
-                                              title="Pulse para editar este albarán"><i class="fa fa-wrench"></i> Ver albarán</button></td>
-                                            <td class="text-center">
-                                                @if (strlen($work->invoicenumber)>0)
-                                                <button type="submit" class="btn btn-danger" formaction="{{url('deleteWork').'/'.$work->id}}"
-                                                        title="No es posible eliminar un albarán facturado" disabled>
-                                                    <i class="fa fa-remove"></i> Eliminar </button>                                                
-                                                @else
-                                                <button type="submit" class="btn btn-danger" formaction="{{url('deleteWork').'/'.$work->id}}"
-                                                    onclick="return confirm('¿Seguro que desea eliminar este albarán?')"
-                                                    title="Pulse para eliminar este albarán"><i class="fa fa-remove"></i> Eliminar </button>
-                                                @endif
-
-                                            </td>   
+                                    <div class="col-sm-12 col-md-12">
+                                    <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" aria-describedby="datatable-responsive_info" style="width: 100%;" width="100%" cellspacing="0">
+                                      <thead>
+                                          <tr role="row">
+                                              <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width:35%" >Nombre</th>
+                                              <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Fecha</th>
+                                              <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 15%;" >Número</th>
+                                              <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Facturado</th>
+                                              <th class="text-right" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Importe</th>
+                                              <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;"></th>
+                                              <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" ></th> 
                                           </tr>
-                                      @endforeach
-                                  </tbody>
-                              </table>
-                            </div>
+                                      </thead> 
+                                        <tbody id="bodytable">
+                                          @foreach ($works as $work)
+                                                @if ($loop->iteration > 10)
+                                                  {{-- utilizamos loop para el id del tr y para habilitar solamente los 10 primeros registros --}}
+                                                <tr id="{{($loop->iteration)}}" style="display:none">                                               
+                                                @else
+                                                <tr id="{{($loop->iteration)}}">                                  
+                                                @endif
+                                                  <td>{{$work->name}}</td>
+                                                  <td class="text-center">{{converterDate($work->work_date)}}</td>
+                                                  <td class="text-center">{{$work->work_number}}</td>
+                                                  <td class="text-center">{{$work->invoicenumber}}</td>
+                                                  <td class="text-right">{{$work->work_total}}</td>
+                                                  <td class="text-center"><button type="submit" class="btn btn-info" formaction="{{url('editWork').'/'.$work->id}}"
+                                                    title="Pulse para editar este albarán"><i class="fa fa-wrench"></i> Ver albarán</button></td>
+                                                  <td class="text-center">
+                                                      @if (strlen($work->invoicenumber)>0)
+                                                      <button type="submit" class="btn btn-danger" formaction="{{url('deleteWork').'/'.$work->id}}"
+                                                              title="No es posible eliminar un albarán facturado" disabled>
+                                                          <i class="fa fa-remove"></i> Eliminar </button>                                                
+                                                      @else
+                                                      <button type="submit" class="btn btn-danger" formaction="{{url('deleteWork').'/'.$work->id}}"
+                                                          onclick="return confirm('¿Seguro que desea eliminar este albarán?')"
+                                                          title="Pulse para eliminar este albarán"><i class="fa fa-remove"></i> Eliminar </button>
+                                                      @endif
 
+                                                  </td>   
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                  </div>
 
-                            </div>
+                                    <div class="col-sm-12 col-md-12">
+                                          <table  class="table table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" role="grid" cellspacing="0">
+                                              <tbody>
+                                                  <tr>
+                                                      <td class="text-right" style="width:70%;">
+                                                          <h3>Total del listado...</h3>
+                                                      </td>
+                                                      <td><h3>{{number_format($totalList,2,',','.')}} €</h3></td>                                   
+                                                  </tr>
+                                              </tbody>
+                                          </table>
+                                        </div>
+
+                                </div>
 
 
                                 <div class="row">

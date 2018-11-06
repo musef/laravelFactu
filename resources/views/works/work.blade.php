@@ -47,7 +47,7 @@
                       <label class="col-md-2 col-sm-2 col-xs-12" >Cliente: </label>
                       <div class="form-group col-md-10 col-sm-10 col-xs-12" >
                           <select name="customerid" id="customerid" class="form-group col-md-12 col-sm-12 col-xs-12" 
-                                  style="height: 34px" onchange="submit()">
+                                  style="height: 34px" onchange="submit()" {{$disabled}}>
                               <option value="0">Seleccione...</option>
                               @if (isset($customers) && count($customers)>0)
                                 @foreach ($customers as $customer)
@@ -64,14 +64,14 @@
                     <div class="form-group col-md-4 col-sm-4 col-xs-12" style="margin-top: 20px">
                       <label class="col-md-2 col-sm-2 col-xs-12" >Dirección</label>
                       <div class="form-group col-md-10 col-sm-10 col-xs-12" >
-                          <input name='worknumber' id='worknumber' class="form-control" type="text" value="{{$customerSelected->customer_address}}" 
+                          <input name='workaddress' id='worknumber' class="form-control" type="text" value="{{$customerSelected->customer_address}}" 
                                  readonly="readonly">
                       </div>
                     </div>
                     <div class="form-group col-md-4 col-sm-4 col-xs-12" style="margin-top: 20px">
                       <label class="col-md-2 col-sm-2 col-xs-12" >Localidad</label>
                       <div class="form-group col-md-10 col-sm-10 col-xs-12" >
-                          <input name='worknumber' id='worknumber' class="form-control" type="text" value="{{$customerSelected->customer_city}}" 
+                          <input name='workcity' id='worknumber' class="form-control" type="text" value="{{$customerSelected->customer_city}}" 
                                  readonly="readonly">
                       </div>
                     </div>                
@@ -82,21 +82,21 @@
                       <label class="col-md-2 col-sm-2 col-xs-12">Número</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                           <input name='worknumber' id='worknumber' class="form-control" type="text" value="{{$work->work_number}}" 
-                                 minlength="3" maxlength="15" readonly="">
+                                 minlength="3" maxlength="15" readonly="readonly">
                       </div>
                     </div>
                     <div class="form-group col-md-4 col-sm-4 col-xs-4" style="margin-top: 20px">
                       <label class="control-label col-md-2 col-sm-2 col-xs-12">Fecha </label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
-                          <input name='workdate' id='workdate' class="form-control" type="text" value="{{$work->work_date}}" 
+                          <input name='workdate' id='workdate' class="form-control" type="text" value="{{$work->work_date}}" {{$disabled}}
                                  required maxlength="10" minlength="10" pattern="[0-3]{1}[0-9]{1}-[0-1]{1}[0-9]{1}-20[0-9]{2}"
-                                 title="Introduzca una fecha con formato dd-mm-aaaa">
+                                 title="Introduzca una fecha con formato dd-mm-aaaa" >
                       </div>
                     </div>
                     <div class="form-group col-md-4 col-sm-4 col-xs-4" style="margin-top: 20px">
                       <label class="control-label col-md-2 col-sm-2 col-xs-12">Factura </label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
-                          <input name='workinvoice' id='workinvoice' class="form-control" type="text" value="{{$work->idinvoice}}" 
+                          <input name='workinvoice' id='workinvoice' class="form-control" type="text" value="{{$work->invoicenumber}}" 
                                  readonly="readonly" title="Facturado en factura ">
                       </div>
                     </div>
@@ -108,7 +108,7 @@
                 <div class="form-group col-md-12 col-sm-12 col-xs-12">
                   <label class="col-md-1 col-sm-1 col-xs-12" >Concepto </label>                  
                   <div class="col-md-12 col-sm-12 col-xs-12" >
-                      <textarea name='workconcept' id='workconcept' class="form-control" minlength="5" maxlength="255" rows="10"
+                      <textarea name='workconcept' id='workconcept' class="form-control" minlength="5" maxlength="255" rows="10" {{$disabled}}
                                 title="Concepto que describe la entrega o trabajo realizado" required="true">{{$work->work_text}}</textarea>
                   </div>
                 </div>              
@@ -116,20 +116,20 @@
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="col-md-3 col-sm-3 col-xs-12">Cantidad </label>
                       <div class="col-md-9 col-sm-9 col-xs-12">
-                          <input name='workqtt' id='workqtt' class="form-control" type="text" pattern="[0-9.,]{0,9}"  
+                          <input name='workqtt' id='workqtt' class="form-control" type="text" pattern="[0-9.,]{0,9}" {{$disabled}} 
                                  value="{{$work->work_qtt}}" title="cantidad a facturar" required >
                       </div>
                     </div>
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Precio </label>
                       <div class="col-md-9 col-sm-9 col-xs-12">
-                          <input name='workprice' id='workprice' class="form-control" type="text" pattern="[0-9.,]{0,9}"
+                          <input name='workprice' id='workprice' class="form-control" type="text" pattern="[0-9.,]{0,9}" {{$disabled}}
                                  value="{{$work->work_price}}" title="precio por unidad" required >
                       </div>
                     </div> 
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Tipo de IVA </label>
-                          <select name="workiva" id="workiva" class="form-group col-md-9 col-sm-9 col-xs-12" 
+                          <select name="workiva" id="workiva" class="form-group col-md-9 col-sm-9 col-xs-12" {{$disabled}}
                                   style="height: 34px" >                              
                               <option value="0">Seleccione...</option>
                               @if (isset($ivaRates) && count($ivaRates)>0)                              
@@ -147,7 +147,7 @@
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Total </label>
                       <div class="col-md-9 col-sm-9 col-xs-12">
-                          <input name='worktotal' id='worktotal' class="form-control" type="text" pattern="[0-9.,]{0,9}"
+                          <input name='worktotal' id='worktotal' class="form-control" type="text" pattern="[0-9.,]{0,9}" {{$disabled}}
                                  value="{{$work->work_total}}" title="Total" required >
                       </div>
                     </div>                  
@@ -206,22 +206,25 @@
                 <div class="form-group">
                   <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3 text-right" style="margin-top: 20px;margin-left: 20%">
 
-                        <button class="btn btn-warning" type="reset" title="Borrar los datos introducidos en el albarán"
+                        <button class="btn btn-warning" type="reset" title="Borrar los datos introducidos en el albarán" {{$disabled}}
                             onclick="return confirm('¿Seguro que desea borrar los datos introducidos en el albarán?')">
                             <i class="fa fa-eraser"></i> Borrar</button>
-                        <button class="btn btn-info" type="button" title="calcular el total del albarán"
+                        <button class="btn btn-info" type="button" title="calcular el total del albarán" {{$disabled}}
                                 onclick="calculator()">
                             <i class="fa fa-calculator"></i> Calcular</button>
                         @if (isset($work->id) && $work->id > 0)
-                        <button type="submit" class="btn btn-success"  formaction="{{url('changeWork')}}" 
-                                title="Modificar los datos de este albarán"
-                                onclick="return confirm('¿Seguro que desea grabar los datos del albarán?')">
-                            <i class="fa fa-save"></i> Modificar</button>
                             @if (strlen($work->invoicenumber)<1)
+                            <button type="submit" class="btn btn-success"  formaction="{{url('changeWork')}}" 
+                                title="Modificar los datos de este albarán" onclick="return confirm('¿Seguro que desea grabar los datos del albarán?')">
+                                <i class="fa fa-save"></i> Modificar</button>                            
                             <button type="submit" class="btn btn-danger"  formaction="{{url('deleteWork')}}"
                                     title="Eliminar definitivamente este albarán"
                                     onclick="return confirm('¿Seguro que desea eliminar este albarán? La acción no podrá ser deshecha.')">
                                 <i class="fa fa-save"></i> Eliminar</button>
+                            @else
+                            <button type="submit" class="btn btn-success"  formaction="{{url('changeWork')}}" disabled
+                                title="No es posible modificar un albarán facturado">
+                                <i class="fa fa-ban"></i> Modificar</button>                                                           
                             @endif
                         @elseif ($customerSelected->id > 0)
                         <button type="submit" class="btn btn-success"  formaction="{{url('recordNewWork')}}"

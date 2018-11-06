@@ -47,6 +47,9 @@ class WorkController extends Controller
           $customer=new Customer;  
         }
          
+        //habilitado inicialmente la edicion
+        $disabled='';        
+        
         // generamos un objeto albarán en blanco
         $work=new Work();
         $work->work_typeiva=21;
@@ -89,7 +92,8 @@ class WorkController extends Controller
         
         return view('works/work')
             ->with('ivaRates',$ivaRates)
-            ->with('customerSelected',$customer)                
+            ->with('customerSelected',$customer)   
+            ->with('disabled',$disabled)                
             ->with('customers',$customers)
             ->with('work',$work);        
     }
@@ -257,6 +261,7 @@ class WorkController extends Controller
             ->with('customerSelected',$cust)                
             ->with('customers',$customers)
             ->with('work',$work)
+            ->with('disabled','')                     
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);        
     }
@@ -294,6 +299,7 @@ class WorkController extends Controller
         return view('works/worksListBySelection')
             ->with('customersSel',$customers)
             ->with('parameters',$parameters)
+            ->with('totalList',0)                
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);        
         
@@ -326,6 +332,9 @@ class WorkController extends Controller
         // mostrarlos de regreso al formulario
         $parameters=['cust'=>$idcustomer,'state'=>$state,'fechini'=> $fechini,
             'fechfin'=> $fechfin,'amount'=>$amount,'wknumber'=>$worknumber];        
+        
+        // total del listado
+        $totalList=0;        
         
         // FECHA INICIAL DEL LISTADO
         // si no se da, será el inicio del año en curso
@@ -397,7 +406,20 @@ class WorkController extends Controller
                      ->leftJoin('invoices','invoices.id','works.idinvoice')
                      ->select('works.*','customers.customer_name as name','invoices.inv_number as invoicenumber')
                      ->orderBy('works.work_number')
-                     ->get();         
+                     ->get();
+                
+                // buscamos en DDBB
+                $totalList=Work::where([
+                 ['works.idcustomer','LIKE',$idcustomer],
+                 ['works.idcompany',$idcompany],
+                 ['works.work_date','>=',$fechini],
+                 ['works.work_date','<',$fechfin],
+                 ['works.work_total','>=',$amount],
+                 ['works.work_number','LIKE','%'.$alb.'%'],
+                 ['works.idinvoice',$sel,$albstate]
+                 ])
+                     ->select('works.work_total')
+                     ->sum('works.work_total');                
 
             } catch (Exception $ex) {
 
@@ -439,7 +461,8 @@ class WorkController extends Controller
         return view('works/worksListBySelection')
             ->with('works',$works)
             ->with('customersSel',$customers)
-            ->with('parameters',$parameters)                
+            ->with('parameters',$parameters)
+            ->with('totalList',$totalList)                
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);          
                 
@@ -457,9 +480,10 @@ class WorkController extends Controller
         $messageOK=$messageWrong=null;
         
         // compañia del usuario
-        $idcomp=Auth::guard('')->user()->idcompany;        
+        $idcomp=Auth::guard('')->user()->idcompany;   
         
-
+        //habilitado inicialmente la edicion
+        $disabled='';
 
             try {
                 // obtenemos el trabajo seleccionado
@@ -477,10 +501,13 @@ class WorkController extends Controller
                     
                     $work->work_date=converterDate($work->work_date);
 
+                    // habilitamos o desabilitamos la edición en función de si ya está facturado                    
+                    (strlen($work->invoicenumber)>2) ? $disabled='disabled' : $disabled='';
+                    
                     // recuperamos el cliente
                     $customerid=$work->idcustomer;        
-                    ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;      
-
+                    ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;                         
+                    
                     $messageOK='Recuperado el albarán seleccionado';                    
                     
                 } else {
@@ -563,6 +590,7 @@ class WorkController extends Controller
             ->with('ivaRates',$ivaRates)
             ->with('customerSelected',$customer)                
             ->with('customers',$customers)
+            ->with('disabled',$disabled)
             ->with('work',$work)
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);        
@@ -765,6 +793,7 @@ class WorkController extends Controller
         ->with('customerSelected',$cust)                
         ->with('customers',$customers)
         ->with('work',$work)
+        ->with('disabled','')                
         ->with('messageOK',$messageOK)
         ->with('messageWrong',$messageWrong);
        
@@ -893,6 +922,7 @@ class WorkController extends Controller
             ->with('customerSelected',$customer)                
             ->with('customers',$customers)
             ->with('work',$work)
+            ->with('disabled','')                
             ->with('messageOK',$messageOK)
             ->with('messageWrong',$messageWrong);
         
@@ -990,7 +1020,8 @@ class WorkController extends Controller
         $search=substr($thisdate,6,4).substr($thisdate,3,2);
         
         $works= Work::where([
-            ['work_number','LIKE','%'.$search.'%']
+            ['work_number','LIKE','%'.$search.'%'],
+            ['idcompany',$idcompany]
         ])
             ->select('work_number')
             ->orderBy('work_number','DESC')->first();
