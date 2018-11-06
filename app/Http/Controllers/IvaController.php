@@ -17,7 +17,8 @@ class IvaController extends Controller
     
     /**
      * Esta función muestra un listado de tipos de IVA creados para la empresa
-     * del usuario
+     * del usuario, excepto el type -1 utilizado como indice para evitar 
+     * integrity violation
      * 
      * @return type
      */
@@ -30,7 +31,10 @@ class IvaController extends Controller
         $messageOK=$messageWrong=null;
                 
         try {
-            $ivas= IvaRates::where('idcompany',$idcomp)->get();
+            $ivas= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['type','<>','-1']
+            ])->get();
         } catch (Exception $ex) {
             $ivas=null;
         } catch (QueryException $quex) {
@@ -75,7 +79,8 @@ class IvaController extends Controller
         // buscamos el iva a modificar
         $iva= IvaRates::where([
             ['id',$id],
-            ['idcompany',$idcomp]
+            ['idcompany',$idcomp],
+            ['type','<>','-1']            
         ])->first();
         
         return view ('company/ivaProfile')
@@ -122,7 +127,8 @@ class IvaController extends Controller
                 try {
                     $iva= IvaRates::where([
                         ['id',$id],
-                        ['idcompany',$idcomp]
+                        ['idcompany',$idcomp],
+                        ['type','<>','-1']                        
                     ])->first();
                     if (is_null($iva) || $iva===false) {
                         // no encontrado el iva  eliminar
@@ -138,7 +144,8 @@ class IvaController extends Controller
                     // buscamos el iva a modificar
                     $iva= IvaRates::where([
                         ['id',$id],
-                        ['idcompany',$idcomp]
+                        ['idcompany',$idcomp],
+                        ['type','<>','-1'] 
                     ])->first();
 
                     return view ('company/ivaProfile')
@@ -153,7 +160,8 @@ class IvaController extends Controller
                     // buscamos el iva a modificar
                     $iva= IvaRates::where([
                         ['id',$id],
-                        ['idcompany',$idcomp]
+                        ['idcompany',$idcomp],
+                        ['type','<>','-1'] 
                     ])->first();
 
                     return view ('company/ivaProfile')
@@ -169,7 +177,8 @@ class IvaController extends Controller
                 try {
                     $iva= IvaRates::where([
                         ['id',$id],
-                        ['idcompany',$idcomp]
+                        ['idcompany',$idcomp],
+                        ['type','<>','-1'] 
                     ])->first();
                     if (is_null($iva) || $iva===false) {
                         // no encontrado el iva  eliminar
@@ -353,7 +362,8 @@ class IvaController extends Controller
                     // obtenemos el objeto iva
                     $iva= IvaRates::where([
                             ['id',$id],
-                            ['idcompany',$idcomp]
+                            ['idcompany',$idcomp],
+                            ['type','<>','-1']
                         ])->first();
                     $iva->idcompany=$idcomp;
                     $iva->iva_name=$name;

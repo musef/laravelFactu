@@ -13,6 +13,16 @@ class IvaRatesSeeder extends Seeder
     {
         DB::table('iva_rates')->insert([
             'idcompany'=>1,
+            'iva_name'=>'Null',
+            'rate'=> '00.00',  
+            'type'=>-1,            
+            'active'=>false,
+            'created_at'=>date(now()),
+            'updated_at'=>date(now())
+        ]);         
+        
+        DB::table('iva_rates')->insert([
+            'idcompany'=>1,
             'iva_name'=>'Tipo General',
             'rate'=> '21.00',
             'type'=>3,            
