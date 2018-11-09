@@ -72,5 +72,8 @@ Route::post('worksList','InvoiceController@showWorksList');
 Route::post('generateInvoices','InvoiceController@createInvoices');
 Route::match(['get','post'],'invoicesList/{mess?}','InvoiceController@showInvoicesMenu');
 Route::post('searchInvoices','InvoiceController@invoicesList');
+Route::post('searchInvoicesPdf','InvoiceController@invoicesPdfList');
 Route::post('showInvoice/{id?}','InvoiceController@showInvoice');
 Route::post('deleteInvoice','InvoiceController@deleteInvoice');
+Route::post('generateInvoice/{id?}','InvoiceController@generatePdfInvoice');
+Route::post('showPdfInvoice/{id?}','InvoiceController@showPdfInvoice');

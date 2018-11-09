@@ -241,15 +241,20 @@
                     </div>                    
                 </div>
                 
-                <div class="form-group">
-                  <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3 text-right" style="margin-top: 20px;margin-left: 20%">
-                    <button type="submit" class="btn btn-success"  formaction="{{url('printInvoice')}}" 
-                        title="Imprimir esta factura" onclick="return confirm('¿Seguro que desea imprimir esta factura?')">
-                        <i class="fa fa-print"></i> Imprimir</button>                            
+                <div class="form-group" style="margin-top: 20px;">
+                  <div class="col-md-3 col-sm-3 col-xs-12 text-right" >                           
                     <button type="submit" class="btn btn-danger"  formaction="{{url('deleteInvoice')}}"
                             title="Eliminar definitivamente esta factura"
                             onclick="return confirm('¿Seguro que desea eliminar esta factura? La acción no podrá ser deshecha.')">
                         <i class="fa fa-exclamation-circle"></i> Eliminar</button>
+                  </div>                    
+                  <div class="col-md-8 col-sm-8 col-xs-12 text-right" >
+                    <button type="submit" class="btn btn-success"  formaction="{{url('generateInvoice')}}" 
+                        title="Generar esta factura" onclick="return confirm('¿Seguro que desea generar fichero de esta factura?')">
+                        <i class="fa fa-file"></i> Fichero PDF</button>                            
+                    <button type="submit" class="btn btn-success"  formaction="{{url('showPdfInvoice')}}"
+                            title="Mostrar factura en PDF">
+                        <i class="fa fa-eye"></i> Ver PDF</button>
                   </div>
                 </div>
 

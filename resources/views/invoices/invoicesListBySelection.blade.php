@@ -74,14 +74,20 @@
                                     </td>                                                                               
                                 </tr>
                                 <tr>
-                                    <td colspan="4" class="text-center">
+                                    <td colspan="5" class="text-center">
 
-                                        <button type="reset" class="btn btn-info" title="Borrar los datos del formulario" >
+                                        <button type="reset" class="btn btn-info" title="Borrar los datos introducidos en formulario" >
                                             <i class='fa fa-eraser'></i> Borrar</button>
 
-                                        <button type="submit" class="btn btn-info" title="Buscar facturas" formaction="{{url('searchInvoices')}}" >
+                                        <button type="submit" class="btn btn-info" title="Buscar facturas y listar en pantalla" 
+                                                formaction="{{url('searchInvoices')}}" >
                                             <i class="fa fa-search-minus"></i> Buscar</button>
-                                    </td>                                
+
+
+                                        <button type="submit" class="btn btn-info" style="margin-left: 40px;" 
+                                                title="mostrar un PDF con la lista de facturas" formaction="{{url('searchInvoicesPdf')}}" >
+                                            <i class="fa fa-search-minus"></i> Lista PDF</button>
+                                    </td>                                      
                                 </tr>                                                                      
                             </tbody>
                         </table>
@@ -154,9 +160,9 @@
                                             <td class="text-right">{{$invoice->inv_total}}</td>
                                             <td class="text-center">{{converterDate($invoice->inv_expiration)}}</td>                                            
                                             <td class="text-center"><button type="submit" class="btn btn-info" formaction="{{url('showInvoice').'/'.$invoice->id}}"
-                                              title="Pulse para editar este factura"><i class="fa fa-euro"></i> Ver factura</button>
-                                            <button type="submit" class="btn btn-success" formaction="{{url('printInvoice').'/'.$invoice->id}}"
-                                              title="Pulse para imprimir esta factura"><i class="fa fa-print"></i> Imprimir</button></td>                                               
+                                              title="Pulse para editar este factura"><i class="fa fa-euro"></i> Ver Datos</button>
+                                            <button type="submit" class="btn btn-success" formaction="{{url('showPdfInvoice').'/'.$invoice->id}}"
+                                              title="Pulse para imprimir esta factura"><i class="fa fa-print"></i> Mostrar Pdf</button></td>                                               
                                           </tr>
                                       @endforeach
                                   </tbody>
@@ -212,6 +218,8 @@
                                 </div>
                           </div>
                         </div>
+                    @elseif (isset($invoices))
+                    <div class="x_panel alert alert-warning">No hay ninguna factura en la selección efectuada</div>
                     @endif
                 </form>
               </div>										

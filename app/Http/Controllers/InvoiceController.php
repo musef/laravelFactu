@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\App;
+
 
 use App\Customer;
 use App\Work;
 use App\Invoice;
 use App\PaymentMethod;
 use App\IvaRates;
+use App\Company;
 
 
 class InvoiceController extends Controller
@@ -834,6 +838,222 @@ class InvoiceController extends Controller
     }
    
     
+        /**
+     * Esta función obtiene la selección para el listado de facturas, a partir
+     * del formulario correspondiente, y muestra el listado en la misma
+     * pantalla de selección.
+     * 
+     * @param Request $request
+     * @return type
+     */
+    public function invoicesPdfList(Request $request) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // lectura de parametros de formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idcustomer= clearInput($request->input('idcustomer'));        
+        $invnumber= clearInput($request->input('invnumber'));
+        $fechini= clearInput($request->input('fechini'));
+        $fechfin= clearInput($request->input('fechfin'));
+        $amount= clearInput($request->input('amount'));
+                  
+        // total del listado
+        $totalList=0;     
+        
+        
+        // FECHA INICIAL DEL LISTADO
+        // si no se da, será el inicio del año en curso
+        if (strlen($fechini)!=10) {
+            $fechini='01-01-'.date('Y').' 00:00:00';
+        } else {
+            $fechini=$fechini.' 00:00:00';
+        }
+        // texto del listado
+        $textlist='desde '.$fechini;        
+        $fechini= converterDateTimeToDDBB($fechini);
+
+        // FECHA FINAL DEL LISTADO
+        // si no se da, será el final del año en curso
+        if (strlen($fechfin)!=10) {
+            $fechfin='31-12-'.date('Y').' 23:59:59';
+        } else {
+            $fechfin=$fechfin.' 23:59:59';
+        }
+        // texto del listado
+        $textlist.=' hasta '.$fechfin;        
+        $fechfin= converterDateTimeToDDBB($fechfin);
+        
+        // CANTIDAD DESDE
+        // si no se da, será desde cero
+        if (strlen($amount)<1) {
+            $amount=0;
+        } else {
+            $textlist.=' - Importes desde '.$amount.' euros';
+        }
+        
+        // Nº ALBARAN
+        // si no se da, serán todos
+        if (strlen($invnumber)<1) {
+            $inv='';
+            $textlist.=' - Todas las facturas';
+        } else {
+            $inv=$invnumber;
+            $textlist.=' - Solo la factura seleccionada';            
+        }
+        //die ($alb);
+        // CLIENTE
+        // si no se da, serán todos
+        if ($idcustomer<1) {
+            $idcustomer='%%';
+            $textlist.=' - Todos los clientes';
+        } else {
+            $textlist.=' - del cliente seleccionado';
+        }
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == $idcomp) {
+
+            try {
+
+                // buscamos en DDBB
+                $invoices= Invoice::where([
+                 ['invoices.idcustomer','LIKE',$idcustomer],
+                 ['invoices.idcompany',$idcompany],
+                 ['invoices.inv_date','>=',$fechini],
+                 ['invoices.inv_date','<',$fechfin],
+                 ['invoices.inv_total','>=',$amount],
+                 ['invoices.inv_number','LIKE','%'.$inv.'%']              
+                 ])
+                     ->leftJoin('customers','customers.id','invoices.idcustomer')
+                     ->select('invoices.*','customers.customer_name as name')
+                     ->orderBy('invoices.inv_number')
+                     ->get();         
+
+                $totalList = Invoice::where([
+                 ['invoices.idcustomer','LIKE',$idcustomer],
+                 ['invoices.idcompany',$idcompany],
+                 ['invoices.inv_date','>=',$fechini],
+                 ['invoices.inv_date','<',$fechfin],
+                 ['invoices.inv_total','>=',$amount],
+                 ['invoices.inv_number','LIKE','%'.$inv.'%']              
+                 ])
+                     ->select('invoices.inv_total')
+                     ->sum('invoices.inv_total');                
+                
+            } catch (Exception $ex) {
+
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            } catch (QueryException $quex) {
+
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;            
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            }     
+            
+            try {   
+                // obtenemos los clientes de la empresa
+                $customers= Customer::where('idcompany',$idcomp)
+                    ->get();                      
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            }            
+            
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;
+        }   
+                        
+        // cabecera de la factura
+        $data='
+            <head>
+                <title>Listado facturas</title>
+                <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }                
+                </style>
+            </head>
+            <body style="width:1000px;border:1px solid black">
+            
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                <h2>Listado de facturas</h2>
+                <p>'.$textlist.'</p>
+                </div>';
+        
+        // cuerpo de la factura
+        $data.='
+            <div style="min-height:500px;" >
+                    <div style="width:100%;" >
+                        <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
+                        <input type="text" value="Cliente" style="width:40%;height:50px;border:2px solid black" >
+                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                    </div>';
+        
+        foreach ($invoices as $invoice) {
+        $data.='
+                    <div style="width:100%;" >                        
+                        <input type="text" value="'.$invoice->inv_number.'" style="width:15%;height:50px;border:none;" >
+                        <input type="text" value="'.$invoice->name.'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.converterDate($invoice->inv_date).'" style="width:12%;height:50px;border:none;text-align:center" >
+                        <input type="text" value="'.number_format($invoice->inv_total,2,',','.').' €" style="width:15%;height:50px;border:none;;text-align:right" >
+                        <input type="text" value="'.converterDate($invoice->inv_expiration).'" style="width:12%;height:50px;border:none;;text-align:center" >
+                    </div>';
+            
+        }
+        $data.='</div>';
+        
+        
+        $data.='
+            <br />
+            <hr>
+            <br />
+            <div style="width:100%" >               
+                <input type="text" value="Total importes ...: '. number_format($totalList,2,',','.').' euros" 
+                    style="width:35%;height:50px;text-align:center;border:none" >
+            </div>';
+     
+        // pie de la factura
+        $data.='
+            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
+            <p>Listado emitido el '. now().'</p>
+            </div>
+      
+            </div>
+        </body>';
+        
+        // generamos un pdf en vista directa sobre la pantalla actual
+        $pdf = App::make('snappy.pdf.wrapper');        
+        $pdf->loadHTML($data);
+        return $pdf->inline();        
+        
+    }
+    
+    
+    
         
     /**
      * Esta función muestra por pantalla una factura identificada por su id
@@ -965,10 +1185,519 @@ class InvoiceController extends Controller
             }            
         } else {
             $messageWrong='El usuario no pertenece a la empresa';
-        }        
-     
+        }             
         
         return redirect()->action('InvoiceController@showInvoicesMenu',['mess'=>$messageOK]);
+    }
+    
+    
+    /**
+     * Esta función genera una vista por pantalla de un documento PDF, en la misma
+     * pantalla (_self) donde se estaba consultando la factura
+     * @param Request $request
+     * @param type $id
+     * @return type
+     */
+    public function showPdfInvoice(Request $request,$id=0) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+      
+        // tomamos el id de la factura por formulario, si es que estamos en edición
+        // individual de la factura
+        if ($request->has('invoiceid') && clearInput($request->input('invoiceid'))>0) 
+            $id=clearInput($request->input('invoiceid'));
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
+        
+        $invoice=new Invoice;
+        
+        try {
+            // obtenemos los datos de la empresa
+            $company=Company::find($idcomp);
+            
+            // obtenemos la factura correspondiente al id
+            $invoice= Invoice::where([
+                ['id',$id],
+                ['idcompany',$idcomp]
+            ])->first();
+            
+            // obtenemos los tipos de iva de la factura
+            $rate0= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva0]
+            ])->first()->rate;
+            $rate1= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva1]
+            ])->first()->rate;
+            $rate2= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva2]
+            ])->first()->rate;
+            $rate3= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva3]
+            ])->first()->rate;
+            
+            // obtenemos el cliente de la factura
+            $customer= Customer::find($invoice->idcustomer);
+            
+            //obtenemos la lista de albaranes de esa factura
+            $works= Work::where([
+                ['works.idinvoice',$invoice->id],
+                ['works.idcompany',$idcomp]                
+            ])
+                ->leftJoin('iva_rates','iva_rates.id','works.idiva')
+                ->select('works.*','iva_rates.rate as ivaRate')
+                    ->get();            
+
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }        
+               
+        // cabecera de la factura
+        $data='
+            <head>
+                <title>Mostrar factura</title>
+                <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }                
+                </style>
+            </head>
+            <body style="width:1000px;border:1px solid black">
+            
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                    <div style="width:100%;border:1px solid black" >
+
+                        <div style="width:50%"> 
+                            <h1>'.$company->company_name.'</h1>
+                            <h2>'.$company->company_address.'</h2>
+                            <h2>'.$company->company_zip.' - '.$company->company_city.'</h2>
+                            <h2>'.$company->company_nif.'</h2>
+                        </div>
+
+                        <div style="margin-left:70%;"> 
+                            <label> Cliente:</label> <br/>
+                            <label>'.$customer->customer_name.'</label></br>
+                            <label>'.$customer->customer_address.'</label></br>
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
+                            <label>'.$customer->customer_nif.'</label></br>
+                        </div>
+
+                        <hr>
+                        <br />
+
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
+                            <label>Factura '.$invoice->inv_number.'</label>
+                            <label style="margin-left:75%">Fecha Factura '.converterDate($invoice->inv_date).'</label>
+                        </div>
+
+                    </div>';
+        
+        // cuerpo de la factura
+        $data.='
+            <div style="min-height:500px;" >
+                    <div style="width:100%;" >
+                        <h2>Detalle de factura</h2>
+                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
+
+                    </div>';
+        
+        foreach ($works as $work) {
+        $data.='
+                    <div style="width:100%;" >                        
+                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                        <input type="text" value="'.$work->work_qtt.'" style="width:10%;height:50px;border:none;text-align:center" >
+                        <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.$work->ivaRate.' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.$work->work_price.'" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
+                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+
+                    </div>';
+            
+        }
+        $data.='</div>';
+        
+        // resumen importe de factura
+        // los desgloses de cuotas se muestran si la factura tiene 2 o más tipos de iva
+        $counttypes=0;
+        $data2='<br />';        
+        if ($invoice->inv_base0>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp0">Base Imponible al '.number_format((100*$invoice->inv_cuota0/$invoice->inv_base0),2,',','.').' % ..:</label>
+                <input type="text" name="bimp0" value="'.number_format($invoice->inv_base0,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo0">Tipo IVA</label>                  
+                <input type="text" name="tipo0" value="'.number_format($rate0,2,',','.').' %" style="width:20%;height:40px; border:none" >                    
+                <label for="cuot0">Cuota IVA</label>                  
+                <input type="text" name="cuot0" value="'.number_format($invoice->inv_cuota0,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;
+        }
+        if ($invoice->inv_cuota1>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp1">Base Imponible al '.number_format((100*$invoice->inv_cuota1/$invoice->inv_base1),2,',','.').' % ..:</label>
+                <input type="text" name="bimp1" value="'.number_format($invoice->inv_base1,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo1">Tipo IVA</label>                  
+                <input type="text" name="tipo1" value="'.number_format($rate1,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
+                <label for="cuot1">Cuota IVA</label>                  
+                <input type="text" name="cuot1" value="'.number_format($invoice->inv_cuota1,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;
+        }
+        if ($invoice->inv_cuota2>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp2">Base Imponible al '.number_format((100*$invoice->inv_cuota2/$invoice->inv_base2),2,',','.').' % ..:</label>
+                <input type="text" name="bimp2" value=" '.number_format($invoice->inv_base2,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo2">Tipo IVA</label>                  
+                <input type="text" name="tipo2" value="'.number_format($rate2,2,',','.').' %" style="width:20%;height:40px; border:none" >                   
+                <label for="cuot2">Cuota IVA</label>                  
+                <input type="text" name="cuot2" value="'.number_format($invoice->inv_cuota2,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;            
+        }
+        if ($invoice->inv_cuota3>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp3">Base Imponible al '.number_format((100*$invoice->inv_cuota3/$invoice->inv_base3),2,',','.').' % ..:</label>
+                <input type="text" name="bimp3" value="'.number_format($invoice->inv_base3,2,',','.').' €" style="width:20%;height:40px; border:none">
+                <label for="tipo3">Tipo IVA</label>                  
+                <input type="text" name="tipo3" value="'.number_format($rate3,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
+                <label for="cuot3">Cuota IVA</label>                  
+                <input type="text" name="cuot3" value="'.number_format($invoice->inv_cuota3,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;            
+        }        
+        
+        // si hay dos o más tipos de iva, se muestra el desglose
+        if ($counttypes>1) {
+            $data.=$data2;            
+        }
+        
+        $bimp=$invoice->inv_base0+$invoice->inv_base1+$invoice->inv_base2+$invoice->inv_base3;
+        $cuota=$invoice->inv_cuota0+$invoice->inv_cuota1+$invoice->inv_cuota2+$invoice->inv_cuota3;
+        
+        $data.='
+            <br />
+            <hr>
+            <div style="width:100%;font-size:1.2em;font-weight:bold" >
+                <label for="bimp">Base Imponible</label>
+                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
+                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
+                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
+                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
+                    style="width:10%;height:40px;border:2px solid black;text-align:center" >    
+                <label for="ttl" style="margin-left:70px">Total Factura</label>                     
+                <input type="text" name="ttl" value="'. number_format($invoice->inv_total,2,',','.').'" 
+                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
+            </div>
+            <br />
+            <div style="width:100%" >               
+                <input type="text" value="Vencimiento de factura: '.converterDate($invoice->inv_expiration).'" 
+                    style="width:60%;height:50px;text-align:left;border:none" >
+                <input type="text" value="importe total a pagar...: '. number_format($invoice->inv_total,2,',','.').' euros" 
+                    style="width:35%;height:50px;text-align:center;border:none" >
+            </div>';
+     
+        // pie de la factura
+        $data.='
+            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
+            <p>Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx</p>
+            </div>
+      
+            </div>
+        </body>';
+        
+        // generamos un pdf en vista directa sobre la pantalla actual
+        $pdf = App::make('snappy.pdf.wrapper');        
+        $pdf->loadHTML($data);
+        return $pdf->inline();
+                
+    }
+    
+    
+    /**
+     * Esta función genera un fichero pdf con la factura seleccionada
+     * @param Request $request
+     * @param type $id
+     * @return type
+     */
+    public function generatePdfInvoice(Request $request,$id=0) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+      
+        // tomamos el id de la factura por formulario, si es que estamos en edición
+        // individual de la factura
+        if ($request->has('invoiceid') && clearInput($request->input('invoiceid'))>0) 
+            $id=clearInput($request->input('invoiceid'));
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
+        
+        $invoice=new Invoice;
+        
+        try {
+            // obtenemos los datos de la empresa
+            $company=Company::find($idcomp);
+            
+            // obtenemos la factura correspondiente al id
+            $invoice= Invoice::where([
+                ['id',$id],
+                ['idcompany',$idcomp]
+            ])->first();
+            
+            // obtenemos los tipos de iva de la factura
+            $rate0= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva0]
+            ])->first()->rate;
+            $rate1= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva1]
+            ])->first()->rate;
+            $rate2= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva2]
+            ])->first()->rate;
+            $rate3= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$invoice->idiva3]
+            ])->first()->rate;
+            
+            // obtenemos el cliente de la factura
+            $customer= Customer::find($invoice->idcustomer);
+            
+            //obtenemos la lista de albaranes de esa factura
+            $works= Work::where([
+                ['works.idinvoice',$invoice->id],
+                ['works.idcompany',$idcomp]                
+            ])
+                ->leftJoin('iva_rates','iva_rates.id','works.idiva')
+                ->select('works.*','iva_rates.rate as ivaRate')
+                    ->get();
+            
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->get();
+            /*
+            // obtenemos los tipos de iva
+            $ivaRates= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['active',true]
+            ])->get();
+             * 
+             */
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }        
+               
+        // cabecera de la factura
+        $data='
+            <head>
+                <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }                
+                </style>
+            </head>
+            <body style="width:1000px;border:1px solid black">
+            
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                    <div style="width:100%;border:1px solid black" >
+
+                        <div style="width:50%"> 
+                            <h1>'.$company->company_name.'</h1>
+                            <h2>'.$company->company_address.'</h2>
+                            <h2>'.$company->company_zip.' - '.$company->company_city.'</h2>
+                            <h2>'.$company->company_nif.'</h2>
+                        </div>
+
+                        <div style="margin-left:70%;"> 
+                            <label> Cliente:</label> <br/>
+                            <label>'.$customer->customer_name.'</label></br>
+                            <label>'.$customer->customer_address.'</label></br>
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
+                            <label>'.$customer->customer_nif.'</label></br>
+                        </div>
+
+                        <hr>
+                        <br />
+
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
+                            <label>Factura '.$invoice->inv_number.'</label>
+                            <label style="margin-left:75%">Fecha Factura '.converterDate($invoice->inv_date).'</label>
+                        </div>
+
+                    </div>';
+        
+        // cuerpo de la factura
+        $data.='
+            <div style="min-height:500px;" >
+                    <div style="width:100%;" >
+                        <h2>Detalle de factura</h2>
+                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
+
+                    </div>';
+        
+        foreach ($works as $work) {
+        $data.='
+                    <div style="width:100%;" >                        
+                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                        <input type="text" value="'.$work->work_qtt.'" style="width:10%;height:50px;border:none;text-align:center" >
+                        <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.$work->ivaRate.' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.$work->work_price.'" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
+                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+
+                    </div>';
+            
+        }
+        $data.='</div>';
+        
+        // resumen importe de factura
+        // los desgloses de cuotas se muestran si la factura tiene 2 o más tipos de iva
+        $counttypes=0;
+        $data2='<br />';        
+        if ($invoice->inv_base0>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp0">Base Imponible al '.number_format((100*$invoice->inv_cuota0/$invoice->inv_base0),2,',','.').' % ..:</label>
+                <input type="text" name="bimp0" value="'.number_format($invoice->inv_base0,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo0">Tipo IVA</label>                  
+                <input type="text" name="tipo0" value="'.number_format($rate0,2,',','.').' %" style="width:20%;height:40px; border:none" >                    
+                <label for="cuot0">Cuota IVA</label>                  
+                <input type="text" name="cuot0" value="'.number_format($invoice->inv_cuota0,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;
+        }
+        if ($invoice->inv_cuota1>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp1">Base Imponible al '.number_format((100*$invoice->inv_cuota1/$invoice->inv_base1),2,',','.').' % ..:</label>
+                <input type="text" name="bimp1" value="'.number_format($invoice->inv_base1,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo1">Tipo IVA</label>                  
+                <input type="text" name="tipo1" value="'.number_format($rate1,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
+                <label for="cuot1">Cuota IVA</label>                  
+                <input type="text" name="cuot1" value="'.number_format($invoice->inv_cuota1,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;
+        }
+        if ($invoice->inv_cuota2>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp2">Base Imponible al '.number_format((100*$invoice->inv_cuota2/$invoice->inv_base2),2,',','.').' % ..:</label>
+                <input type="text" name="bimp2" value=" '.number_format($invoice->inv_base2,2,',','.').' €" style="width:20%;height:40px; border:none" >
+                <label for="tipo2">Tipo IVA</label>                  
+                <input type="text" name="tipo2" value="'.number_format($rate2,2,',','.').' %" style="width:20%;height:40px; border:none" >                   
+                <label for="cuot2">Cuota IVA</label>                  
+                <input type="text" name="cuot2" value="'.number_format($invoice->inv_cuota2,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;            
+        }
+        if ($invoice->inv_cuota3>0) {
+            $data2.='
+            <div style="width:100%;" >
+                <label for="bimp3">Base Imponible al '.number_format((100*$invoice->inv_cuota3/$invoice->inv_base3),2,',','.').' % ..:</label>
+                <input type="text" name="bimp3" value="'.number_format($invoice->inv_base3,2,',','.').' €" style="width:20%;height:40px; border:none">
+                <label for="tipo3">Tipo IVA</label>                  
+                <input type="text" name="tipo3" value="'.number_format($rate3,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
+                <label for="cuot3">Cuota IVA</label>                  
+                <input type="text" name="cuot3" value="'.number_format($invoice->inv_cuota3,2,',','.').' €" style="width:20%;height:40px; border:none" >
+            </div>';
+            $counttypes++;            
+        }        
+        
+        // si hay dos o más tipos de iva, se muestra el desglose
+        if ($counttypes>1) {
+            $data.=$data2;            
+        }
+        
+        $bimp=$invoice->inv_base0+$invoice->inv_base1+$invoice->inv_base2+$invoice->inv_base3;
+        $cuota=$invoice->inv_cuota0+$invoice->inv_cuota1+$invoice->inv_cuota2+$invoice->inv_cuota3;
+        
+        $data.='
+            <br />
+            <hr>
+            <div style="width:100%;font-size:1.2em;font-weight:bold" >
+                <label for="bimp">Base Imponible</label>
+                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
+                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
+                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
+                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
+                    style="width:10%;height:40px;border:2px solid black;text-align:center" >    
+                <label for="ttl" style="margin-left:70px">Total Factura</label>                     
+                <input type="text" name="ttl" value="'. number_format($invoice->inv_total,2,',','.').'" 
+                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
+            </div>
+            <br />
+            <div style="width:100%" >               
+                <input type="text" value="Vencimiento de factura: '.converterDate($invoice->inv_expiration).'" 
+                    style="width:60%;height:50px;text-align:left;border:none" >
+                <input type="text" value="importe total a pagar...: '. number_format($invoice->inv_total,2,',','.').' euros" 
+                    style="width:35%;height:50px;text-align:center;border:none" >
+            </div>';
+     
+        // pie de la factura
+        $data.='
+            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
+            <p>Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx</p>
+            </div>
+      
+            </div>
+        </body>';
+        
+        // nombre del fichero a generar
+        $filename='Factura'.$invoice->inv_number;
+        
+        $snappy = App::make('snappy.pdf');
+        //To file
+        return   new \Illuminate\Http\Response(
+                $snappy->getOutputFromHtml($data),
+            200,
+            array(
+                'Content-Type'          => 'application/pdf',
+                'Content-Disposition'   => 'attachment; filename="'.$filename.'"'
+            )                
+                
+         );
+
+                
     }
     
     
@@ -1170,9 +1899,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // error
             return array(0,0);
-        }
-
-        
+        }        
     }
     
 }
