@@ -838,7 +838,7 @@ class InvoiceController extends Controller
     }
    
     
-        /**
+    /**
      * Esta función obtiene la selección para el listado de facturas, a partir
      * del formulario correspondiente, y muestra el listado en la misma
      * pantalla de selección.
@@ -871,7 +871,7 @@ class InvoiceController extends Controller
             $fechini=$fechini.' 00:00:00';
         }
         // texto del listado
-        $textlist='desde '.$fechini;        
+        $textlist='Desde '.substr($fechini,0,10);       
         $fechini= converterDateTimeToDDBB($fechini);
 
         // FECHA FINAL DEL LISTADO
@@ -882,7 +882,7 @@ class InvoiceController extends Controller
             $fechfin=$fechfin.' 23:59:59';
         }
         // texto del listado
-        $textlist.=' hasta '.$fechfin;        
+        $textlist.=' hasta '.substr($fechfin,0,10);        
         $fechfin= converterDateTimeToDDBB($fechfin);
         
         // CANTIDAD DESDE
@@ -959,21 +959,7 @@ class InvoiceController extends Controller
                 $customers=null;            
                 $messageWrong='Error en base de datos obteniendo albaranes';
 
-            }     
-            
-            try {   
-                // obtenemos los clientes de la empresa
-                $customers= Customer::where('idcompany',$idcomp)
-                    ->get();                      
-            } catch (Exception $ex) {
-                // generamos un objeto en blanco
-                $customers=null;
-                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
-            } catch (QueryException $quex) {
-                // generamos un objeto en blanco
-                $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
-            }            
+            }                 
             
         } else {
             $messageWrong='Empresa no corresponde al usuario';
@@ -994,9 +980,9 @@ class InvoiceController extends Controller
                 }                
                 </style>
             </head>
-            <body style="width:1000px;border:1px solid black">
+            <body style="width:1000px;">
             
-                <div style="width:99%; margin: 5px 5px 5px 5px;">
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
 
                 <h2>Listado de facturas</h2>
                 <p>'.$textlist.'</p>
@@ -1004,25 +990,45 @@ class InvoiceController extends Controller
         
         // cuerpo de la factura
         $data.='
-            <div style="min-height:500px;" >
+            <div style="min-height:500px;border:1px solid black" >
                     <div style="width:100%;" >
                         <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
-                        <input type="text" value="Cliente" style="width:40%;height:50px;border:2px solid black" >
+                        <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
                         <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
                         <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
                         <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
                     </div>';
         
+        $count=0;
         foreach ($invoices as $invoice) {
-        $data.='
+            $data.='
                     <div style="width:100%;" >                        
                         <input type="text" value="'.$invoice->inv_number.'" style="width:15%;height:50px;border:none;" >
-                        <input type="text" value="'.$invoice->name.'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.$invoice->name.'" style="width:44%;height:50px;border:none;text-align:left" >
                         <input type="text" value="'.converterDate($invoice->inv_date).'" style="width:12%;height:50px;border:none;text-align:center" >
                         <input type="text" value="'.number_format($invoice->inv_total,2,',','.').' €" style="width:15%;height:50px;border:none;;text-align:right" >
                         <input type="text" value="'.converterDate($invoice->inv_expiration).'" style="width:12%;height:50px;border:none;;text-align:center" >
                     </div>';
-            
+            $count++;
+            // paginamos
+            if ($count>=25) {
+                // pie de la factura
+                $count=0;
+                $data.='</div><br /><br />
+                           
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                <h2>Listado de facturas</h2>
+                <p>'.$textlist.'</p>
+                </div>
+                <div style="min-height:500px;border:1px solid black" >
+                    <div style="width:100%;" >
+                        <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
+                        <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
+                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                    </div>';               
+            }            
         }
         $data.='</div>';
         
@@ -1031,24 +1037,17 @@ class InvoiceController extends Controller
             <br />
             <hr>
             <br />
-            <div style="width:100%" >               
+            <div style="width:100%;font-weight:bold;font-size:1.4em;" >                
                 <input type="text" value="Total importes ...: '. number_format($totalList,2,',','.').' euros" 
-                    style="width:35%;height:50px;text-align:center;border:none" >
+                    style="width:50%;height:50px;text-align:center;border:none" >
             </div>';
      
-        // pie de la factura
-        $data.='
-            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
-            <p>Listado emitido el '. now().'</p>
-            </div>
-      
-            </div>
-        </body>';
-        
         // generamos un pdf en vista directa sobre la pantalla actual
         $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data);
-        return $pdf->inline();        
+        $pdf->loadHTML($data)
+                ->setOption('footer-center','Pagina [page] de [toPage]')
+                ->setOption('footer-left','Listado emitido el '.now());
+        return $pdf->inline();              
         
     }
     
@@ -1202,6 +1201,8 @@ class InvoiceController extends Controller
         
         // mensajes
         $messageOK=$messageWrong=null;
+        
+        $pie='Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx';
       
         // tomamos el id de la factura por formulario, si es que estamos en edición
         // individual de la factura
@@ -1321,20 +1322,33 @@ class InvoiceController extends Controller
                     </div>';
         
         foreach ($works as $work) {
-        $data.='
-                    <div style="width:100%;" >                        
-                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                        <input type="text" value="'.$work->work_qtt.'" style="width:10%;height:50px;border:none;text-align:center" >
-                        <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
-                        <input type="text" value="'.$work->ivaRate.' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.$work->work_price.'" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
-                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-
-                    </div>';
-            
-        }
-        $data.='</div>';
+            $data.='
+                <div style="width:100%;" >                        
+                    <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                    <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
+                    <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
+                    <input type="text" value="'.number_format($work->ivaRate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                    <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
+                    <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
+                        style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+                </div>';            
+            }
+            // si el concepto excede de 51 chars., hacemos varias líneas
+            if (strlen($work->work_text) > 51) {
+                $conceptlength= strlen($work->work_text);
+                for ($n=51;$n<$conceptlength;$n=$n+51) {
+                    // paginamos líneas de 51 caracteres de longitud
+                    $data.='<div style="width:100%;" >                        
+                                <input type="text" value="" style="width:10%;height:35px;border:none;" >
+                                <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
+                                <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
+                                <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                                <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                                <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
+                            </div>';
+                }            
+            }        
+            $data.='</div>';
         
         // resumen importe de factura
         // los desgloses de cuotas se muestran si la factura tiene 2 o más tipos de iva
@@ -1422,7 +1436,7 @@ class InvoiceController extends Controller
         // pie de la factura
         $data.='
             <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
-            <p>Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx</p>
+            <p>'.$pie.'</p>
             </div>
       
             </div>
@@ -1446,6 +1460,8 @@ class InvoiceController extends Controller
         
         // mensajes
         $messageOK=$messageWrong=null;
+        
+        $pie='Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx';
       
         // tomamos el id de la factura por formulario, si es que estamos en edición
         // individual de la factura
@@ -1500,14 +1516,7 @@ class InvoiceController extends Controller
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
                 ->get();
-            /*
-            // obtenemos los tipos de iva
-            $ivaRates= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['active',true]
-            ])->get();
-             * 
-             */
+
         } catch (Exception $ex) {
             // generamos un objeto en blanco
             $customers=null;
@@ -1576,16 +1585,15 @@ class InvoiceController extends Controller
         
         foreach ($works as $work) {
         $data.='
-                    <div style="width:100%;" >                        
-                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                        <input type="text" value="'.$work->work_qtt.'" style="width:10%;height:50px;border:none;text-align:center" >
-                        <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
-                        <input type="text" value="'.$work->ivaRate.' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.$work->work_price.'" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
-                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-
-                    </div>';
+            <div style="width:100%;" >                        
+                <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
+                <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
+                <input type="text" value="'.number_format($work->ivaRate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
+                <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
+                    style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+            </div>';
             
         }
         $data.='</div>';
@@ -1676,7 +1684,7 @@ class InvoiceController extends Controller
         // pie de la factura
         $data.='
             <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
-            <p>Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx</p>
+            <p>'.$pie.'</p>
             </div>
       
             </div>

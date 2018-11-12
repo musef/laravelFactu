@@ -86,7 +86,7 @@
 
                                         <button type="submit" class="btn btn-info" style="margin-left: 40px;" 
                                                 title="mostrar un PDF con la lista de facturas" formaction="{{url('searchInvoicesPdf')}}" >
-                                            <i class="fa fa-search-minus"></i> Lista PDF</button>
+                                            <i class="fa fa-list"></i> Lista PDF</button>
                                     </td>                                      
                                 </tr>                                                                      
                             </tbody>
@@ -160,9 +160,9 @@
                                             <td class="text-right">{{$invoice->inv_total}}</td>
                                             <td class="text-center">{{converterDate($invoice->inv_expiration)}}</td>                                            
                                             <td class="text-center"><button type="submit" class="btn btn-info" formaction="{{url('showInvoice').'/'.$invoice->id}}"
-                                              title="Pulse para editar este factura"><i class="fa fa-euro"></i> Ver Datos</button>
+                                              title="Pulse para editar este factura"><i class="fa fa-edit"></i> Ver Datos</button>
                                             <button type="submit" class="btn btn-success" formaction="{{url('showPdfInvoice').'/'.$invoice->id}}"
-                                              title="Pulse para imprimir esta factura"><i class="fa fa-print"></i> Mostrar Pdf</button></td>                                               
+                                              title="Pulse para imprimir esta factura"><i class="fa fa-eye"></i> Mostrar Pdf</button></td>                                               
                                           </tr>
                                       @endforeach
                                   </tbody>

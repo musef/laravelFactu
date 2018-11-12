@@ -145,11 +145,10 @@
                                 <thead>
                                     <tr role="row">
                                         <th class="sorting" tabindex="0" aria-controls="datatable-responsive" style="width:35%" >Nombre</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Fecha</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 15%;" >Número</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Facturado</th>
+                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 8%;" >Fecha</th>
+                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 13%;" >Número</th>
+                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 21%;" >Concepto</th>
                                         <th class="text-right" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;" >Importe</th>
-                                        <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;">Seleccionar</th> 
                                         <th class="text-center" tabindex="0" aria-controls="datatable-responsive" style="width: 10%;"></th>                                        
                                     </tr>
                                 </thead> 
@@ -164,11 +163,8 @@
                                             <td>{{$work->name}}</td>
                                             <td class="text-center">{{converterDate($work->work_date)}}</td>
                                             <td class="text-center">{{$work->work_number}}</td>
-                                            <td class="text-center">{{$work->invoicenumber}}</td>
-                                            <td class="text-right">{{$work->work_total}}</td>
-                                            <td class="text-center">
-                                                <input type="checkbox" name="workchecked{{$work->id}}" class="text-center">
-                                            </td>                                             
+                                            <td class="text-left">{{substr($work->work_text,0,50)}}</td>
+                                            <td class="text-right">{{$work->work_total}}</td>                                           
                                             <td class="text-center"><button type="submit" class="btn btn-info" formaction="{{url('editWork').'/'.$work->id}}"
                                               title="Pulse para editar este albarán"><i class="fa fa-wrench"></i> Ver albarán</button></td>
   
