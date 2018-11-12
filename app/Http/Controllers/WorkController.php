@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\App;
 
 use App\Work;
 use App\Customer;
 use App\IvaRates;
+use App\Company;
 
 
 /**
@@ -43,12 +45,14 @@ class WorkController extends Controller
         if ($request->has('customerid')) {
             $customerid= clearInput($request->input('customerid'));
             ($customerid>0) ? $customer=Customer::find($customerid) : $customer=new Customer;
+            //deshabilitado inicialmente la edicion
+            ($customerid==0) ? $disabled='disabled' : $disabled='';
         } else {
           $customer=new Customer;  
+          $disabled='disabled';
         }
          
-        //habilitado inicialmente la edicion
-        $disabled='';        
+
         
         // generamos un objeto albarán en blanco
         $work=new Work();
@@ -211,6 +215,9 @@ class WorkController extends Controller
                 $work->save();
 
                 $messageOK='Albarán grabado correctamente';
+                
+                // cambiamos para visualización
+                $work->work_date= $workdate;
 
             }            
            
@@ -362,7 +369,7 @@ class WorkController extends Controller
         // si no se da, serán todos
         if (strlen($worknumber)<1) $alb='';
         else $alb=$worknumber;
-        //die ($alb);
+   
         // CLIENTE
         // si no se da, serán todos
         if ($idcustomer<1) $idcustomer='%%';
@@ -470,6 +477,247 @@ class WorkController extends Controller
     
     
     /**
+     * Esta función obtiene la selección para el listado de albaranes, a partir
+     * del formulario correspondiente, y muestra el listado en  formato pdf 
+     * en la misma pantalla de selección.
+     * 
+     * @param Request $request
+     * @return type
+     */
+    public function worksPdfList(Request $request) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // lectura de parametros de formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idcustomer= clearInput($request->input('idcustomer'));        
+        $worknumber= clearInput($request->input('worknumber'));
+        $fechini= clearInput($request->input('fechini'));
+        $fechfin= clearInput($request->input('fechfin'));
+        $amount= clearInput($request->input('amount'));
+        $state= clearInput($request->input('state'));               
+        
+        // total del listado
+        $totalList=0;    
+        
+        
+        // FECHA INICIAL DEL LISTADO
+        // si no se da, será el inicio del año en curso
+        if (strlen($fechini)!=10) {
+            $fechini='01-01-'.date('Y').' 00:00:00';
+        } else {
+            $fechini=$fechini.' 00:00:00';
+        }
+        // texto del listado
+        $textlist='Desde '.substr($fechini,0,10);        
+        $fechini= converterDateTimeToDDBB($fechini);
+
+        // FECHA FINAL DEL LISTADO
+        // si no se da, será el final del año en curso
+        if (strlen($fechfin)!=10) {
+            $fechfin='31-12-'.date('Y').' 23:59:59';
+        } else {
+            $fechfin=$fechfin.' 23:59:59';
+        }
+        // texto del listado
+        $textlist.=' hasta '.substr($fechfin,0,10);        
+        $fechfin= converterDateTimeToDDBB($fechfin);
+        
+        // CANTIDAD DESDE
+        // si no se da, será desde cero
+        if (strlen($amount)<1) {
+            $amount=0;
+        } else {
+            $textlist.=' - Importes desde '.$amount.' euros';
+        }
+        
+        // Nº ALBARAN
+        // si no se da, serán todos
+        if (strlen($worknumber)<1) {
+            $alb='';
+            $textlist.=' - Todos los albaranes';
+        } else {
+            $alb=$worknumber;
+            $textlist.=' - Solo el albarán seleccionado';            
+        }
+        
+        // CLIENTE
+        // si no se da, serán todos
+        if ($idcustomer<1) {
+            $idcustomer='%%';
+            $textlist.=' - Todos los clientes';
+        } else {
+            $textlist.=' - del cliente seleccionado';
+        }
+        
+        // ESTADO
+        // serán todos, los facturados o los no facturados
+        if ($state==1) {
+            // solamente no facturados
+            $albstate='0';
+            $sel='LIKE';
+            $textlist.=' - Albaranes sin facturar';            
+        } elseif ($state==2) {
+            // solamente facturados
+            // excluye lo que empiece por cero
+            $albstate='0';
+            $sel='NOT LIKE';
+            $textlist.=' - Albaranes facturados';            
+        } else {
+            //todos los albaranes
+            $albstate='%%';
+            $sel='LIKE'; 
+            $textlist.=' - Facturados y sin facturar';
+        }        
+        
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        // verificamos que el usuario pertenece a la empresa
+        if ($idcompany == $idcomp) {
+
+            try {
+
+                // buscamos en DDBB
+                $works=Work::where([
+                 ['works.idcustomer','LIKE',$idcustomer],
+                 ['works.idcompany',$idcompany],
+                 ['works.work_date','>=',$fechini],
+                 ['works.work_date','<',$fechfin],
+                 ['works.work_total','>=',$amount],
+                 ['works.work_number','LIKE','%'.$alb.'%'],
+                 ['works.idinvoice',$sel,$albstate]
+                 ])
+                     ->leftJoin('customers','customers.id','works.idcustomer')
+                     ->leftJoin('invoices','invoices.id','works.idinvoice')
+                     ->select('works.*','customers.customer_name as name','invoices.inv_number as invoicenumber')
+                     ->orderBy('works.work_number')
+                     ->get();
+                
+                // buscamos en DDBB
+                $totalList=Work::where([
+                 ['works.idcustomer','LIKE',$idcustomer],
+                 ['works.idcompany',$idcompany],
+                 ['works.work_date','>=',$fechini],
+                 ['works.work_date','<',$fechfin],
+                 ['works.work_total','>=',$amount],
+                 ['works.work_number','LIKE','%'.$alb.'%'],
+                 ['works.idinvoice',$sel,$albstate]
+                 ])
+                     ->select('works.work_total')
+                     ->sum('works.work_total');                 
+                
+            } catch (Exception $ex) {
+
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            } catch (QueryException $quex) {
+
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;            
+                $messageWrong='Error en base de datos obteniendo albaranes';
+
+            }     
+                      
+            
+        } else {
+            $messageWrong='Empresa no corresponde al usuario';
+                // generamos un objeto en blanco
+                $invoices=null;
+                $customers=null;
+        }   
+                        
+        // cabecera de la factura
+        $data='
+            <head>
+                <title>Listado albaranes</title>
+                <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }                
+                </style>
+            </head>
+            <body style="width:1000px;">
+            
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+
+                <h2>Listado de albaranes</h2>
+                <p>'.$textlist.'</p>
+                </div>';
+        
+        // cuerpo de la factura
+        $data.='
+            <div style="min-height:500px;border:1px solid black" >
+                    <div style="width:100%;" >
+                        <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
+                        <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
+                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
+                    </div>';
+        $count=0;
+        foreach ($works as $work) {
+            $data.='
+                        <div style="width:100%;" >                        
+                            <input type="text" value="'.$work->work_number.'" style="width:15%;height:50px;border:none;" >
+                            <input type="text" value="'.$work->name.'" style="width:25%;height:50px;border:none;text-align:left" >
+                            <input type="text" value="'.converterDate($work->work_date).'" style="width:12%;height:50px;border:none;text-align:center" >
+                            <input type="text" value="'.number_format($work->work_total,2,',','.').' €" style="width:12%;height:50px;border:none;;text-align:right" >
+                            <input type="text" value="'.$work->work_text.'" style="width:34.5%;height:50px;border:none;;text-align:left" >
+                        </div>';
+            $count++;
+            // paginamos
+            if ($count>=25) {
+                // pie de la factura
+                $count=0;
+                $data.='</div><br /><br />
+                           
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                <h2>Listado de albaranes</h2>
+                <p>'.$textlist.'</p>
+                </div>
+                <div style="min-height:500px;border:1px solid black" >
+                    <div style="width:100%;" >
+                        <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
+                        <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
+                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
+                    </div>';                
+            }
+        }
+        $data.='</div>';
+        
+        
+        $data.='
+            <br />
+            <hr>
+            <br />
+            <div style="width:100%;font-weight:bold;font-size:1.4em;" >               
+                <input type="text" value="Total importes ...: '. number_format($totalList,2,',','.').' euros" 
+                    style="width:50%;height:50px;text-align:center;border:none" >
+            </div>';
+        
+        // generamos un pdf en vista directa sobre la pantalla actual
+        $pdf = App::make('snappy.pdf.wrapper');        
+        $pdf->loadHTML($data)
+                ->setOption('footer-center','Pagina [page] de [toPage]')
+                ->setOption('footer-left','Listado emitido el '.now());
+        return $pdf->inline();        
+        
+    }    
+    
+    
+    
+    /**
      * Esta función recupera para edición el albarán seleccionado en el listado
      * @param type $id
      * @return type
@@ -482,8 +730,8 @@ class WorkController extends Controller
         // compañia del usuario
         $idcomp=Auth::guard('')->user()->idcompany;   
         
-        //habilitado inicialmente la edicion
-        $disabled='';
+        //deshabilitado inicialmente la edicion
+        ($id==0) ? $disabled='disabled' : $disabled='';
 
             try {
                 // obtenemos el trabajo seleccionado
@@ -1002,6 +1250,348 @@ class WorkController extends Controller
             ->with('messageWrong',$messageWrong);         
         
     }    
+    
+    
+    /**
+     * Esta función genera una vista por pantalla de un documento PDF, en la misma
+     * pantalla (_self) donde se estaba consultando la factura
+     * @param Request $request
+     * @param type $id
+     * @return type
+     */
+    public function showPdfWork(Request $request,$id=0) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+      
+        // tomamos el id de la factura por formulario, si es que estamos en edición
+        // individual de la factura
+        if ($request->has('workid') && clearInput($request->input('workid'))>0) 
+            $id=clearInput($request->input('workid'));
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
+        
+        $work=new Work;
+
+       
+                // edicion
+                try {
+                    // obtenemos los datos de la empresa
+                    $company=Company::find($idcomp);
+
+                        // obtenemos el albarán correspondiente al id
+                        $work= Work::where([
+                            ['id',$id],
+                            ['idcompany',$idcomp]
+                        ])->first();  
+
+                    // obtenemos el tipo de iva del albarán
+                    $rate= IvaRates::where([
+                        ['idcompany',$idcomp],
+                        ['id',$work->idiva]
+                    ])->first()->rate;
+
+                    // obtenemos el cliente del albarán
+                    $customer= Customer::find($work->idcustomer);
+
+
+                } catch (Exception $ex) {
+                    // generamos un objeto en blanco
+                    $customers=null;
+                    $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+                } catch (QueryException $quex) {
+                    // generamos un objeto en blanco
+                    $customers=null;
+                    $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+                }           
+               
+        // cabecera del albarán
+        $data='
+            <head>
+                <title>Mostrar albarán</title>
+                <meta charset="utf-8">
+            </head>
+            <body style="width:1000px;">
+              <div style="width:100%;border:1px solid black">
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                    <div style="width:100%;border:1px solid black" >
+
+                        <div style="width:50%"> 
+                            <h2 style="margin-bottom:0px;" >'.$company->company_name.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_address.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_zip.' - '.$company->company_city.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_nif.'</h2>
+                        </div>
+
+                        <div style="margin-left:70%;"> 
+                            <label> Cliente:</label> <br/>
+                            <label>'.$customer->customer_name.'</label></br>
+                            <label>'.$customer->customer_address.'</label></br>
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
+                            <label>'.$customer->customer_nif.'</label></br>
+                        </div>
+
+                        <hr>
+                        <br />
+
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
+                            <label>Albarán '.$work->work_number.'</label>
+                            <label style="margin-left:75%">Fecha Albarán '.converterDate($work->work_date).'</label>
+                        </div>
+
+                    </div>';
+        
+        // cuerpo del albarán
+        $data.='
+            <div style="min-height:200px;" >
+                    <div style="width:100%;" >
+                        <h2>Detalle del albarán</h2>
+                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
+
+                    </div>';
+        
+        // paginamos líneas de 51 caracteres de longitud
+        $data.='    <div style="width:100%;" >                        
+                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                        <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
+                        <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.number_format($rate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'"
+                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+                    </div>';            
+        
+        // si el concepto excede de 51 chars., hacemos varias líneas
+        if (strlen($work->work_text) > 51) {
+            $conceptlength= strlen($work->work_text);
+            for ($n=51;$n<$conceptlength;$n=$n+51) {
+                // paginamos líneas de 51 caracteres de longitud
+                $data.='<div style="width:100%;" >                        
+                            <input type="text" value=" -- " style="width:10%;height:35px;border:none;" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
+                            <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                            <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
+                        </div>';
+            }            
+        }
+      
+        $data.='</div>';        
+        
+        // resumen importes de albarán       
+        $bimp=$work->work_qtt*$work->work_price;
+        $cuota=($work->work_qtt*$work->work_price)*$rate/100;
+        
+        $data.='
+            <br />
+            <hr>
+            <div style="width:100%;font-size:1.2em;font-weight:bold" >
+                <label for="bimp">Base Imponible</label>
+                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
+                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
+                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
+                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
+                    style="width:10%;height:40px;border:2px solid black;text-align:center" >
+                <label for="ttl" style="margin-left:70px">Total Albarán</label>
+                <input type="text" name="ttl" value="'. number_format($work->work_total,2,',','.').'" 
+                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
+            </div>';
+     
+        // pie 
+        $data.='</div></div>
+            </body>';
+        
+        // generamos un pdf en vista directa sobre la pantalla actual
+        $pdf = App::make('snappy.pdf.wrapper');        
+        $pdf->loadHTML($data);
+        return $pdf->inline();
+                
+    }
+    
+    
+    /**
+     * Esta función genera un fichero pdf con el albarán seleccionado
+     * @param Request $request
+     * @param type $id
+     * @return type
+     */
+    public function generatePdfWork(Request $request,$id=0) {
+        
+        // mensajes
+        $messageOK=$messageWrong=null;
+      
+        // tomamos el id de la factura por formulario, si es que estamos en edición
+        // individual de la factura
+        if ($request->has('workid') && clearInput($request->input('workid'))>0) 
+            $id=clearInput($request->input('workid'));
+        
+        // obtenemos la empresa del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;        
+        
+        $work=new Work;
+        
+        try {
+            // obtenemos los datos de la empresa
+            $company=Company::find($idcomp);
+            
+            // obtenemos el albarán correspondiente al id
+            $work= Work::where([
+                ['id',$id],
+                ['idcompany',$idcomp]
+            ])->first();
+            
+            // obtenemos el tipo de iva del albarán
+            $rate= IvaRates::where([
+                ['idcompany',$idcomp],
+                ['id',$work->idiva]
+            ])->first()->rate;
+            
+            // obtenemos el cliente del albarán
+            $customer= Customer::find($work->idcustomer);
+                       
+
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }        
+               
+        // cabecera del albarán
+        $data='
+            <head>
+                <title>Mostrar albarán</title>
+                <meta charset="utf-8">
+            </head>
+            <body style="width:1000px;">
+              <div style="width:100%;border:1px solid black">
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                    <div style="width:100%;border:1px solid black" >
+
+                        <div style="width:50%"> 
+                            <h2 style="margin-bottom:0px;" >'.$company->company_name.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_address.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_zip.' - '.$company->company_city.'</h2>
+                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_nif.'</h2>
+                        </div>
+
+                        <div style="margin-left:70%;"> 
+                            <label> Cliente:</label> <br/>
+                            <label>'.$customer->customer_name.'</label></br>
+                            <label>'.$customer->customer_address.'</label></br>
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
+                            <label>'.$customer->customer_nif.'</label></br>
+                        </div>
+
+                        <hr>
+                        <br />
+
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
+                            <label>Albarán '.$work->work_number.'</label>
+                            <label style="margin-left:75%">Fecha Albarán '.converterDate($work->work_date).'</label>
+                        </div>
+
+                    </div>';
+        
+        // cuerpo del albarán
+        $data.='
+            <div style="min-height:200px;" >
+                    <div style="width:100%;" >
+                        <h2>Detalle del albarán</h2>
+                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
+                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
+                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
+
+                    </div>';
+        
+        // paginamos líneas de 51 caracteres de longitud
+        $data.='    <div style="width:100%;" >                        
+                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
+                        <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
+                        <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
+                        <input type="text" value="'.number_format($rate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
+                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
+                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
+                    </div>';            
+        
+        // si el concepto excede de 51 chars., hacemos varias líneas
+        if (strlen($work->work_text) > 51) {
+            $conceptlength= strlen($work->work_text);
+            for ($n=51;$n<$conceptlength;$n=$n+51) {
+                // paginamos líneas de 51 caracteres de longitud
+                $data.='<div style="width:100%;" >                        
+                            <input type="text" value=" -- " style="width:10%;height:35px;border:none;" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
+                            <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
+                            <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
+                        </div>';
+            }            
+        }
+      
+        $data.='</div>';        
+        
+        // resumen importes de albarán       
+        $bimp=$work->work_qtt*$work->work_price;
+        $cuota=($work->work_qtt*$work->work_price)*$rate/100;
+        
+        $data.='
+            <br />
+            <hr>
+            <div style="width:100%;font-size:1.2em;font-weight:bold" >
+                <label for="bimp">Base Imponible</label>
+                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
+                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
+                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
+                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
+                    style="width:10%;height:40px;border:2px solid black;text-align:center" >
+                <label for="ttl" style="margin-left:70px">Total Albarán</label>
+                <input type="text" name="ttl" value="'. number_format($work->work_total,2,',','.').'" 
+                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
+            </div>';
+     
+        // pie 
+        $data.='</div></div>
+            </body>';
+
+        
+        // nombre del fichero a generar
+        $filename='Albaran'.$work->work_number;
+        
+        $snappy = App::make('snappy.pdf');
+        //To file
+        return   new \Illuminate\Http\Response(
+                $snappy->getOutputFromHtml($data),
+            200,
+            array(
+                'Content-Type'          => 'application/pdf',
+                'Content-Disposition'   => 'attachment; filename="'.$filename.'"'
+            )                
+                
+         );
+
+                
+    }
+    
+    
+    
     
     
     /**

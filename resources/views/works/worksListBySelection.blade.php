@@ -90,13 +90,15 @@
                                     </td>                                                                               
                                 </tr>
                                 <tr>
-                                    <td colspan="4" class="text-center">
-
+                                    <td colspan="6" class="text-center">
                                         <button type="reset" class="btn btn-info" title="Borrar los datos del formulario" >
                                             <i class='fa fa-eraser'></i> Borrar</button>
-
                                         <button type="submit" class="btn btn-info" title="Buscar albaranes" formaction="{{url('searchWorksByOptions')}}" >
                                             <i class="fa fa-search-minus"></i> Buscar</button>
+                                            
+                                        <button type="submit" class="btn btn-info" style="margin-left: 40px;" 
+                                                title="mostrar un PDF con la lista de albaranes" formaction="{{url('searchWorksPdf')}}" >
+                                            <i class="fa fa-list"></i> Lista PDF</button>                                            
                                     </td>                                
                                 </tr>                                                                      
                             </tbody>
@@ -237,6 +239,8 @@
                                 </div>
                           </div>
                         </div>
+                    @elseif (isset($works))
+                    <div class="x_panel alert alert-warning">No hay ningún albarán en la selección efectuada</div>                    
                     @endif
                 </form>
               </div>										

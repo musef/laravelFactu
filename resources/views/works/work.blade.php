@@ -47,7 +47,7 @@
                       <label class="col-md-2 col-sm-2 col-xs-12" >Cliente: </label>
                       <div class="form-group col-md-10 col-sm-10 col-xs-12" >
                           <select name="customerid" id="customerid" class="form-group col-md-12 col-sm-12 col-xs-12" 
-                                  style="height: 34px" onchange="submit()" {{$disabled}}>
+                                  style="height: 34px" onchange="submit()">
                               <option value="0">Seleccione...</option>
                               @if (isset($customers) && count($customers)>0)
                                 @foreach ($customers as $customer)
@@ -204,8 +204,20 @@
                 </div>
                
                 <div class="form-group">
-                  <div class="col-md-9 col-sm-9 col-xs-12 col-md-offset-3 text-right" style="margin-top: 20px;margin-left: 20%">
-
+                  <div class="col-md-4 col-sm-4 col-xs-12 text-center" >
+                    @if (isset($work->id) && $work->id > 0)
+                    <div class="col-md-8 col-sm-8 col-xs-12 text-right" >
+                      <button type="submit" class="btn btn-success"  formaction="{{url('generateWork')}}" {{$disabled}}
+                          title="Generar en fichero este albarán" onclick="return confirm('¿Seguro que desea generar fichero de este albarán?')">
+                          <i class="fa fa-file"></i> Fichero PDF</button>                            
+                      <button type="submit" class="btn btn-success"  formaction="{{url('showPdfWork')}}" {{$disabled}}
+                              title="Mostrar albarán en PDF">
+                          <i class="fa fa-eye"></i> Ver PDF</button>
+                    </div>
+                    @endif
+                  </div>
+                    
+                  <div class="col-md-8 col-sm-8 col-xs-12 text-right">    
                         <button class="btn btn-warning" type="reset" title="Borrar los datos introducidos en el albarán" {{$disabled}}
                             onclick="return confirm('¿Seguro que desea borrar los datos introducidos en el albarán?')">
                             <i class="fa fa-eraser"></i> Borrar</button>
@@ -235,8 +247,8 @@
                                 title="Debe seleccionar un cliente para grabar" onclick="return checkingForm()" disabled>
                                 <i class="fa fa-save"></i> Grabar</button>                              
                         @endif
-
-
+                  </div>
+                      
                   </div>
                 </div>
 

@@ -61,10 +61,13 @@ Route::match(['get','post'],'work','WorkController@showWork');
 Route::post('recordNewWork','WorkController@recordNewWork');
 Route::match(['get','post'],'worksList','WorkController@showWorksMenu');
 Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');
+Route::post('searchWorksPdf','WorkController@worksPdfList');
 Route::post('editWork/{id?}','WorkController@editWork');
 Route::post('deleteWork','WorkController@deleteWork');
 Route::post('deleteWork/{id?}','WorkController@deleteWorkFromList');
 Route::post('changeWork','WorkController@updateWork');
+Route::post('generateWork/{id?}','WorkController@generatePdfWork');
+Route::post('showPdfWork/{id?}','WorkController@showPdfWork');
 
 /* ***** RUTAS DE FACTURAS ****** */
 Route::match(['get','post'],'invoicesMenu','InvoiceController@invoicesMenu');
