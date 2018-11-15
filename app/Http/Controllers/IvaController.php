@@ -155,7 +155,7 @@ class IvaController extends Controller
                         ->with('messageWrong',$messageWrong);    
                     
                 } catch (QueryException $quex) {
-                    $messageWrong='Error en base de datos intentando eliminar un tipo de IVA'; 
+                    $messageWrong='Error en base de datos intentando eliminar un tipo de IVA - Error QV001';
                     // desde aquí se vuelve a edición
                     // buscamos el iva a modificar
                     $iva= IvaRates::where([
@@ -190,7 +190,7 @@ class IvaController extends Controller
                 } catch (Exception $ex) {
                     $messageWrong='Error intentando eliminar un tipo de IVA';
                 } catch (QueryException $quex) {
-                    $messageWrong='Error en base de datos intentando eliminar un tipo de IVA';           
+                    $messageWrong='Error en base de datos intentando eliminar un tipo de IVA - Error QV002';           
                 }          
 
             }            
@@ -284,7 +284,7 @@ class IvaController extends Controller
                 } catch (Exception $ex) {
                     $messageWrong='Error intentando grabar un nuevo tipo de IVA';
                 } catch (QueryException $quex) {
-                    $messageWrong='Error en base de datos intentando grabar un nuevo tipo de IVA';             
+                    $messageWrong='Error en base de datos intentando grabar un nuevo tipo de IVA - Error QV003';             
                 }                
                
             }
@@ -378,7 +378,7 @@ class IvaController extends Controller
                 } catch (Exception $ex) {
                     $messageWrong='Error intentando modificar un tipo de IVA';
                 } catch (QueryException $quex) {
-                    $messageWrong='Error en base de datos intentando modificar un tipo de IVA';             
+                    $messageWrong='Error en base de datos intentando modificar un tipo de IVA - Error QV004';            
                 }                
                
             }

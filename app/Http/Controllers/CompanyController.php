@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
+
 use App\Company;
 use App\PaymentMethod;
 
@@ -85,7 +87,7 @@ class CompanyController extends Controller
                 } catch (QueryException $quex) {
                     // generamos un objeto en blanco
                     $company=new Company;
-                    $messageWrong='Error en base de datos modificando los datos de empresa';
+                    $messageWrong='Error en base de datos modificando los datos de empresa - Error QE001';
                 }  
             } else {
                 // la empresa no existe
@@ -131,6 +133,7 @@ class CompanyController extends Controller
             ->with('messageWrong',$messageWrong); 
         
     }
+    
     
     /**
      * Esta función muestra el formulario de creación de métodos de pago
@@ -197,18 +200,21 @@ class CompanyController extends Controller
         $method->diff=$diff;
         $method->payment_day=$day;
 
-        $ret=$method->save();
-        
-        //mensajes
-        $messageOK=$messageWrong=null;
                 
-        if ($ret===false || $ret==0) {
+        //mensajes
+        $messageOK=$messageWrong=null;        
+        
+        try {
+            $ret=$method->save();    
+            $messageOK='Método de pago modificado correctamente';
+        } catch (Exception $ex) {
             $method=new PaymentMethod();
             $messageWrong='No ha sido posible modificar ese método de pago, o no existe';
-        } else {
-            $messageOK='Método de pago modificado correctamente';
+        } catch (QueryException $quex) {
+            $method=new PaymentMethod();
+            $messageWrong='No ha sido posible modificar ese método de pago, o no existe- Error QE002';  
         }
-        
+                
         return view('company/paymentProfile')
             ->with('method',$method)
             ->with('messageOK',$messageOK)
@@ -239,18 +245,20 @@ class CompanyController extends Controller
         $method->diff=$diff;
         $method->payment_day=$day;
 
-        $ret=$method->save();
-        
         //mensajes
         $messageOK=$messageWrong=null;
-                
-        if ($ret===true || $ret==1) {
-            $messageOK='Método de pago creado correctamente';            
-        } else {
-            $method=new PaymentMethod();
-            $messageWrong='No ha sido posible crear ese método de pago';
-        }
         
+        try {
+            $ret=$method->save();   
+            $messageOK='Método de pago creado correctamente';
+        } catch (Exception $ex) {
+            $method=new PaymentMethod();
+            $messageWrong='No ha sido posible crear ese método de pago, o no existe';
+        } catch (QueryException $quex) {
+            $method=new PaymentMethod();
+            $messageWrong='No ha sido posible crear ese método de pago, o no existe- Error QE002';  
+        }
+                
         return view('company/paymentProfile')
             ->with('method',$method)
             ->with('messageOK',$messageOK)

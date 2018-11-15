@@ -77,12 +77,13 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $ivaRates=null;
-            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos - Error QW001';
         }
 
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -91,7 +92,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW002';
         }        
         
         return view('works/work')
@@ -246,12 +247,13 @@ class WorkController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $ivaRates=null;
-                $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+                $messageWrong='Error en base de datos obteniendo los tipos de iva activos - Error QW003';
             }
 
             try {   
                 // obtenemos los clientes de la empresa
                 $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')                        
                     ->get();                      
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -260,7 +262,7 @@ class WorkController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW004';
             } 
         
             return view('works/work')
@@ -290,6 +292,7 @@ class WorkController extends Controller
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -298,7 +301,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW005';
         }                                
         
         $parameters=['cust'=>0,'state'=>0,'fechini'=>'','fechfin'=>'','amount'=>'','wknumber'=>''];
@@ -415,7 +418,7 @@ class WorkController extends Controller
                      ->orderBy('works.work_number')
                      ->get();
                 
-                // buscamos en DDBB
+                // sumatorio
                 $totalList=Work::where([
                  ['works.idcustomer','LIKE',$idcustomer],
                  ['works.idcompany',$idcompany],
@@ -440,13 +443,14 @@ class WorkController extends Controller
                 // generamos un objeto en blanco
                 $works=null;
                 $customers=null;            
-                $messageWrong='Error en base de datos obteniendo albaranes';
+                $messageWrong='Error en base de datos obteniendo albaranes - Error QW006';
 
             }     
             
             try {   
                 // obtenemos los clientes de la empresa
                 $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')                        
                     ->get();                      
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -455,7 +459,7 @@ class WorkController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW007';
             }            
             
         } else {
@@ -581,6 +585,7 @@ class WorkController extends Controller
             try {
 
                 // buscamos en DDBB
+                // listado por numero de albaran
                 $works=Work::where([
                  ['works.idcustomer','LIKE',$idcustomer],
                  ['works.idcompany',$idcompany],
@@ -615,13 +620,31 @@ class WorkController extends Controller
                 $invoices=null;
                 $customers=null;
                 $messageWrong='Error en base de datos obteniendo albaranes';
+                // regreso al formulario
+                $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                    'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+                return view('works/worksListBySelection')
+                    ->with('customersSel',$customers)
+                    ->with('parameters',$parameters)
+                    ->with('totalList',0)                
+                    ->with('messageOK',null)
+                    ->with('messageWrong',$messageWrong);                
 
             } catch (QueryException $quex) {
 
                 // generamos un objeto en blanco
                 $invoices=null;
                 $customers=null;            
-                $messageWrong='Error en base de datos obteniendo albaranes';
+                $messageWrong='Error en base de datos obteniendo albaranes - Error QW008';
+                // regreso al formulario
+                $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                    'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+                return view('works/worksListBySelection')
+                    ->with('customersSel',$customers)
+                    ->with('parameters',$parameters)
+                    ->with('totalList',0)                
+                    ->with('messageOK',null)
+                    ->with('messageWrong',$messageWrong);                
 
             }     
                       
@@ -798,7 +821,7 @@ class WorkController extends Controller
                 //generamos un cliente en blanco
                 $customer=new Customer;
 
-                $messageWrong='Error en base de datos obteniendo el albarán';
+                $messageWrong='Error en base de datos obteniendo el albarán - Error QW009';
 
             }            
              
@@ -816,12 +839,13 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $ivaRates=null;
-            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos - Error QW010';
         }
         
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -830,7 +854,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW011';
         }          
         
         
@@ -996,7 +1020,7 @@ class WorkController extends Controller
             $work->work_price=0.00;
             $work->work_date= date('d-m-Y');            
         } catch (QueryException $quex) {
-            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $messageWrong='Error en base de datos: imposible eliminar el albarán - Error QW012';
             $customer=new Customer;
             // generamos un objeto albarán en blanco
             $work=new Work();
@@ -1019,12 +1043,13 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $ivaRates=null;
-            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos - Error QW013';
         }
         
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -1033,7 +1058,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW014';
         }  
   
         return view('works/work')
@@ -1125,7 +1150,7 @@ class WorkController extends Controller
             $work->work_price=0.00;
             $work->work_date= date('d-m-Y');            
         } catch (QueryException $quex) {
-            $messageWrong='Error en base de datos: imposible eliminar el albarán';
+            $messageWrong='Error en base de datos: imposible eliminar el albarán - Error QW015';
             $customer=new Customer;
             // generamos un objeto albarán en blanco
             $work=new Work();
@@ -1148,12 +1173,13 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $ivaRates=null;
-            $messageWrong='Error en base de datos obteniendo los tipos de iva activos';
+            $messageWrong='Error en base de datos obteniendo los tipos de iva activos - Error QW016';
         }
         
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -1162,7 +1188,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW017';
         }            
         
         return view('works/work')
@@ -1222,7 +1248,7 @@ class WorkController extends Controller
             $messageWrong='Error en base de datos: imposible eliminar el albarán';
            
         } catch (QueryException $quex) {
-            $messageWrong='Error en base de datos: imposible eliminar el albarán';           
+            $messageWrong='Error en base de datos: imposible eliminar el albarán - Error QW018';           
         }
           
 
@@ -1230,6 +1256,7 @@ class WorkController extends Controller
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -1238,7 +1265,7 @@ class WorkController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW019';
         }            
         
         
@@ -1300,10 +1327,28 @@ class WorkController extends Controller
                     // generamos un objeto en blanco
                     $customers=null;
                     $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+                    // regreso al formulario
+                    $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                        'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+                    return view('works/worksListBySelection')
+                        ->with('customersSel',$customers)
+                        ->with('parameters',$parameters)
+                        ->with('totalList',0)                
+                        ->with('messageOK',null)
+                        ->with('messageWrong',$messageWrong);                    
                 } catch (QueryException $quex) {
                     // generamos un objeto en blanco
                     $customers=null;
-                    $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+                    $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QW020';
+                    // regreso al formulario
+                    $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                        'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+                    return view('works/worksListBySelection')
+                        ->with('customersSel',$customers)
+                        ->with('parameters',$parameters)
+                        ->with('totalList',0)                
+                        ->with('messageOK',null)
+                        ->with('messageWrong',$messageWrong);                    
                 }           
                
         // cabecera del albarán
@@ -1461,11 +1506,29 @@ class WorkController extends Controller
         } catch (Exception $ex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error obteniendo albarán para pdf';
+            // regreso al formulario
+            $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+            return view('works/worksListBySelection')
+                ->with('customersSel',$customers)
+                ->with('parameters',$parameters)
+                ->with('totalList',0)                
+                ->with('messageOK',null)
+                ->with('messageWrong',$messageWrong);            
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            $messageWrong='Error en base de datos obteniendo albarán para pdf - Error QW021';
+            // regreso al formulario
+            $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
+                'fechfin'=> '','amount'=>0,'wknumber'=>''];             
+            return view('works/worksListBySelection')
+                ->with('customersSel',$customers)
+                ->with('parameters',$parameters)
+                ->with('totalList',0)                
+                ->with('messageOK',null)
+                ->with('messageWrong',$messageWrong);
         }        
                
         // cabecera del albarán
