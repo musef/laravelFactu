@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\App;
@@ -44,6 +43,7 @@ class InvoiceController extends Controller
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -172,6 +172,7 @@ class InvoiceController extends Controller
             try {   
                 // obtenemos los clientes de la empresa
                 $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')                        
                     ->get();                      
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -623,6 +624,7 @@ class InvoiceController extends Controller
             try {   
                 // obtenemos los clientes de la empresa
                 $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')
                     ->get();
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -675,6 +677,7 @@ class InvoiceController extends Controller
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();                      
         } catch (Exception $ex) {
             // generamos un objeto en blanco
@@ -809,6 +812,7 @@ class InvoiceController extends Controller
             try {   
                 // obtenemos los clientes de la empresa
                 $customers= Customer::where('idcompany',$idcomp)
+                    ->orderBy('customer_name')                        
                     ->get();                      
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -1086,6 +1090,7 @@ class InvoiceController extends Controller
             
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();
             
             // obtenemos los tipos de iva
@@ -1161,6 +1166,7 @@ class InvoiceController extends Controller
 
                     // obtenemos los clientes de la empresa
                     $customers= Customer::where('idcompany',$idcomp)
+                        ->orderBy('customer_name')                            
                         ->get();
 
                     // obtenemos los tipos de iva
@@ -1515,6 +1521,7 @@ class InvoiceController extends Controller
             
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')                    
                 ->get();
 
         } catch (Exception $ex) {
@@ -1707,6 +1714,609 @@ class InvoiceController extends Controller
 
                 
     }
+    
+    
+    /**
+     * Esta función muestra el menú de listado de sumatorio de facturas emitidas
+     * a los clientes entre fechas
+     * @return type
+     */
+    public function customerInvoicesMenu() {
+                
+        // mensajes
+        $messageOK=$messageWrong=null;       
+        
+        // guardamos los parametros del formulario para 
+        // mostrarlos de regreso al formulario
+        $parameters=['cust'=>0,'fechini'=> '','fechfin'=> ''];        
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }          
+        
+        return view('invoices/customerInvoicesSum')
+            ->with('customersSel',$customers)
+            ->with('invoices',null)
+            ->with('parameters',$parameters)                
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);  
+        
+    }
+    
+    
+    
+    /**
+     * Esta función muestra el menú de listado de sumatorio de facturas emitidas
+     * a los clientes entre fechas
+     * @return type
+     */
+    public function showSumatoryInvoices(Request $request) {
+                
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // lectura de parametros de formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idcustomer= clearInput($request->input('idcustomer'));        
+        $fechini= clearInput($request->input('fechini'));
+        $fechfin= clearInput($request->input('fechfin'));
+        
+        // guardamos los parametros del formulario para 
+        // mostrarlos de regreso al formulario
+        $parameters=['cust'=>$idcustomer,'fechini'=> $fechini,
+            'fechfin'=> $fechfin];
+        
+        // FECHA INICIAL DEL LISTADO (por defecto, año en curso)
+        // si no se da, será el inicio del año en curso
+        if (strlen($fechini)!=10) {
+            $fechini='01-01-'.date('Y').' 00:00:00';
+        } else {
+            $fechini=$fechini.' 00:00:00';
+        }
+        // texto del listado
+        $textlist='Desde '.substr($fechini,0,10);       
+        $fechini= converterDateTimeToDDBB($fechini);
+
+        // FECHA FINAL DEL LISTADO
+        // si no se da, será el final del año en curso
+        if (strlen($fechfin)!=10) {
+            $fechfin='31-12-'.date('Y').' 23:59:59';
+        } else {
+            $fechfin=$fechfin.' 23:59:59';
+        }
+        // texto del listado
+        $textlist.=' hasta '.substr($fechfin,0,10);        
+        $fechfin= converterDateTimeToDDBB($fechfin);        
+
+        // CLIENTE
+        // si no se da, serán todos
+        if ($idcustomer<1) {
+            $idcustomer='%%';
+            $textlist.=' - Todos los clientes';
+        } else {
+            $textlist.=' - del cliente seleccionado';
+        }
+        
+        
+        $invoices=null;
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        // variables acumuladas
+        $sumtot=$sumbas0=$sumcuo0=$sumbas1=$sumcuo1=$sumbas2=$sumcuo2=$sumbas3=$sumcuo3=0;  
+        
+        if ($idcompany == $idcomp) {
+            
+            try {      
+                
+                // obtenemos la lista de ids y nombre de clientes con facturación
+                // en el intervalo deseado
+                $customersList= Invoice::where([
+                 ['invoices.idcustomer','LIKE',$idcustomer],
+                 ['invoices.idcompany',$idcompany],
+                 ['invoices.inv_date','>=',$fechini],
+                 ['invoices.inv_date','<',$fechfin]              
+                 ])
+                     ->leftJoin('customers','customers.id','invoices.idcustomer')                       
+                     ->select('invoices.idcustomer','customers.customer_name as name')
+                     ->groupBy('invoices.idcustomer')                        
+                     ->orderBy('customers.customer_name')
+                     ->get(); 
+                              
+                
+                // procesamos la lista, sumando cada base, cuota y el total,
+                // cliente por cliente
+                
+                foreach ($customersList as $custom) {
+                    
+                    $totalList = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')
+                        ->sum('invoices.inv_total');
+                    $base0List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base0');
+                    $base1List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base1');
+                    $base2List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base2');
+                    $base3List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base3');          
+                    $cuota0List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota0');
+                    $cuota1List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota1');
+                    $cuota2List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota2');
+                    $cuota3List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]        
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota3');                    
+                                                            
+                    // guardamos los datos de cada cliente en un array para visualizar en pantalla
+                    $arr=array('id'=>$custom['idcustomer'],'name'=>$custom['name'],'total'=>$totalList,
+                        'base0'=>$base0List,'base1'=>$base1List,'base2'=>$base2List,'base3'=>$base3List,
+                        'cuota0'=>$cuota0List,'cuota1'=>$cuota1List,'cuota2'=>$cuota2List,'cuota3'=>$cuota3List);
+                    $invoices[]=$arr;
+                    
+                    // acumulamos los diferentes subtotales
+                    $sumtot+=$totalList;
+                    $sumcuo0+=$cuota0List;
+                    $sumbas0+=$base0List;
+                    $sumcuo1+=$cuota1List;
+                    $sumbas1+=$base1List;
+                    $sumcuo2+=$cuota2List;
+                    $sumbas2+=$base2List;
+                    $sumcuo3+=$cuota3List;
+                    $sumbas3+=$base3List;                      
+                    
+                }                
+                
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            }
+            
+        } else {            
+            $messageWrong='El usuario no pertenece a la empresa del listado';            
+        }
+        
+        
+        try {   
+            // obtenemos los clientes de la empresa
+            $customers= Customer::where('idcompany',$idcomp)
+                ->orderBy('customer_name')
+                ->get();                      
+        } catch (Exception $ex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+        } catch (QueryException $quex) {
+            // generamos un objeto en blanco
+            $customers=null;
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+        }          
+        
+        $totals=['base0'=>$sumbas0,'cuota0'=> $sumcuo0,
+            'base1'=>$sumbas1,'cuota1'=> $sumcuo1,
+            'base2'=>$sumbas2,'cuota2'=> $sumcuo2,
+            'base3'=>$sumbas3,'cuota3'=> $sumcuo3,
+            'total'=>$sumtot];
+        
+        return view('invoices/customerInvoicesSum')
+            ->with('customersSel',$customers)
+            ->with('invoices',$invoices)
+            ->with('parameters',$parameters) 
+            ->with('totals',$totals)                 
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);          
+    }
+    
+    
+    /**
+     * Esta función muestra el menú de listado de sumatorio de facturas emitidas
+     * a los clientes entre fechas
+     * @return type
+     */
+    public function sumatoryInvoicesPdf(Request $request) {
+                
+        // mensajes
+        $messageOK=$messageWrong=null;
+        
+        // lectura de parametros de formulario
+        $idcompany= clearInput($request->input('companyid'));
+        $idcustomer= clearInput($request->input('idcustomer'));        
+        $fechini= clearInput($request->input('fechini'));
+        $fechfin= clearInput($request->input('fechfin'));
+        
+        // guardamos los parametros del formulario para 
+        // mostrarlos de regreso al formulario
+        $parameters=['cust'=>$idcustomer,'fechini'=> $fechini,
+            'fechfin'=> $fechfin];
+        
+        // FECHA INICIAL DEL LISTADO (por defecto, año en curso)
+        // si no se da, será el inicio del año en curso
+        if (strlen($fechini)!=10) {
+            $fechini='01-01-'.date('Y').' 00:00:00';
+        } else {
+            $fechini=$fechini.' 00:00:00';
+        }
+        // texto del listado
+        $textlist='Desde '.substr($fechini,0,10);       
+        $fechini= converterDateTimeToDDBB($fechini);
+
+        // FECHA FINAL DEL LISTADO
+        // si no se da, será el final del año en curso
+        if (strlen($fechfin)!=10) {
+            $fechfin='31-12-'.date('Y').' 23:59:59';
+        } else {
+            $fechfin=$fechfin.' 23:59:59';
+        }
+        // texto del listado
+        $textlist.=' hasta '.substr($fechfin,0,10);        
+        $fechfin= converterDateTimeToDDBB($fechfin);        
+
+        // CLIENTE
+        // si no se da, serán todos
+        if ($idcustomer<1) {
+            $idcustomer='%%';
+            $textlist.=' - Todos los clientes';
+        } else {
+            $textlist.=' - del cliente seleccionado';
+        }
+        
+        
+        $invoices=null;
+        
+        // compañia del usuario
+        $idcomp=Auth::guard('')->user()->idcompany;
+        
+        if ($idcompany == $idcomp) {
+            
+            try {      
+                
+                // obtenemos la lista de clientes 
+                $customersList= Invoice::where([
+                 ['invoices.idcustomer','LIKE',$idcustomer],
+                 ['invoices.idcompany',$idcompany],
+                 ['invoices.inv_date','>=',$fechini],
+                 ['invoices.inv_date','<',$fechfin]              
+                 ])
+                     ->leftJoin('customers','customers.id','invoices.idcustomer')                       
+                     ->select('invoices.idcustomer','customers.customer_name as name')
+                     ->groupBy('invoices.idcustomer')                        
+                     ->orderBy('customers.customer_name')
+                     ->get(); 
+                
+                // variables acumuladas
+                $sumtot=$sumbas0=$sumcuo0=$sumbas1=$sumcuo1=$sumbas2=$sumcuo2=$sumbas3=$sumcuo3=0;
+                
+                foreach ($customersList as $custom) {
+                    
+                    $totalList = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')
+                        ->sum('invoices.inv_total');
+                    $base0List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base0');
+                    $base1List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base1');
+                    $base2List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base2');
+                    $base3List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_base3');          
+                    $cuota0List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota0');
+                    $cuota1List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota1');
+                    $cuota2List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]            
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota2');
+                    $cuota3List = Invoice::where([
+                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                     ['invoices.idcompany',$idcompany],
+                     ['invoices.inv_date','>=',$fechini],
+                     ['invoices.inv_date','<',$fechfin]        
+                     ])
+                         ->select('invoices.*','invoices.idcustomer')
+                         ->groupBy('invoices.idcustomer')                    
+                        ->sum('invoices.inv_cuota3');                    
+          
+                    // preparamos el array con los datos de cada cliente
+                    $arr=array('id'=>$custom['idcustomer'],'name'=>$custom['name'],'total'=>$totalList,
+                        'base0'=>$base0List,'base1'=>$base1List,'base2'=>$base2List,'base3'=>$base3List,
+                        'cuota0'=>$cuota0List,'cuota1'=>$cuota1List,'cuota2'=>$cuota2List,'cuota3'=>$cuota3List);
+                    $invoices[]=$arr;
+                
+                    // acumulamos los diferentes subtotales
+                    $sumtot+=$totalList;
+                    $sumcuo0+=$cuota0List;
+                    $sumbas0+=$base0List;
+                    $sumcuo1+=$cuota1List;
+                    $sumbas1+=$base1List;
+                    $sumcuo2+=$cuota2List;
+                    $sumbas2+=$base2List;
+                    $sumcuo3+=$cuota3List;
+                    $sumbas3+=$base3List;                    
+                }
+                
+                
+            } catch (Exception $ex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
+            } catch (QueryException $quex) {
+                // generamos un objeto en blanco
+                $customers=null;
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
+            }
+            
+        } else {            
+            $messageWrong='El usuario no pertenece a la empresa del listado';            
+        }
+        
+         // cabecera de la factura
+        $data='
+            <head>
+                <title>Listado facturación de clientes</title>
+                <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }                
+                </style>
+            </head>
+            <body style="width:1000px;border:1px solid black">
+            
+                <div style="width:99%; margin: 5px 5px 5px 5px;">
+
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+
+                <h2>Listado de facturación por cliente</h2>
+                <p>'.$textlist.'</p>
+                </div>';
+                       
+        // cuerpo de la factura
+        $data.='
+            <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
+                <tr>   
+                        <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
+                        <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+
+                </tr>
+                <tr>
+                        <td style="height:18px;font-weight:bold;"><label></label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                        <td style="height:18px;font-weight:bold;"><label>General</label></td> 
+                        <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
+                        <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
+                </tr>';        
+        $count=0;
+        foreach ($invoices as $invoice) {
+            $data.='
+                    <tr>                     
+                        <td colspan="1" style="text-align:left"><label>'.substr($invoice['name'],0,35).'</label ></td>
+                        <td><label>'.number_format($invoice['base0'],2,',','.').'</label ></td>
+                        <td><label>'.number_format($invoice['cuota0'],2,',','.').'</label ></td> 
+                        <td><label>'.number_format($invoice['base1'],2,',','.').'</label ></td>
+                        <td><label>'.number_format($invoice['cuota1'],2,',','.').'</label ></td> 
+                        <td><label>'.number_format($invoice['base2'],2,',','.').'</label ></td>
+                        <td><label>'.number_format($invoice['cuota2'],2,',','.').'</label ></td> 
+                        <td><label>'.number_format($invoice['base3'],2,',','.').'</label ></td>
+                        <td><label>'.number_format($invoice['cuota3'],2,',','.').'</label ></td>                        
+                        <td><label>'.number_format($invoice['total'],2,',','.').'</label ></td>
+                    </tr>';
+            $count++;
+            // paginamos
+            if ($count>=35) {
+                // pie de la factura
+                $count=0;
+                $data.='</div></table><br />
+                           
+                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                <h2>Listado de facturación por cliente</h2>
+                <p>'.$textlist.'</p>
+                </div>
+                <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
+                    <tr>   
+                            <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
+                            <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+
+                    </tr>
+                    <tr>
+                            <td style="height:18px;font-weight:bold;"><label></label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                            <td style="height:18px;font-weight:bold;"><label>General</label></td> 
+                            <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
+                            <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
+                    </tr>';               
+            }            
+        }
+        $data.='
+                <tr>
+                    <td colspan="10"><hr></td>
+                </tr>
+                <tr>                     
+                    <td style="height:18px;font-weight:bold;"><label>Sumas .........</label ></td>
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas0,2,',','.').'</label ></td>
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo0,2,',','.').'</label ></td> 
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas1,2,',','.').'</label ></td>
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo1,2,',','.').'</label ></td> 
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas2,2,',','.').'</label ></td>
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo2,2,',','.').'</label ></td> 
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas3,2,',','.').'</label ></td>
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo3,2,',','.').'</label ></td>                        
+                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumtot,2,',','.').'</label ></td>
+                </tr>
+                </div></table>';
+        
+        // generamos un pdf en vista directa sobre la pantalla actual
+        $pdf = App::make('snappy.pdf.wrapper');        
+        $pdf->loadHTML($data)
+                ->setOption('footer-center','Pagina [page] de [toPage]')
+                ->setOption('footer-left','Listado emitido el '.now());
+        return $pdf->inline();
+        
+    }
+    
     
     
     /**

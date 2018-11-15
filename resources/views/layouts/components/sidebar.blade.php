@@ -46,19 +46,20 @@
                       <li><a><i class="fa fa-users"></i> Clientes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                           <li><a href="{{url('/showCustomers')}}">Ficha clientes</a></li>    
-                          <li><a href="{{url('/customersList')}}">Listados</a></li>                           
+                          <li><a href="{{url('/customersList')}}">Listado clientes</a></li>                           
                         </ul>
                       </li> 
                       <li><a><i class="fa fa-wrench"></i> Albaranes<span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/work')}}">Albarán</a></li>    
-                          <li><a href="{{url('/worksList')}}">Listados</a></li>                           
+                          <li><a href="{{url('/work')}}">Generar albarán</a></li>    
+                          <li><a href="{{url('/worksList')}}">Listado albaranes</a></li>                           
                         </ul>
                       </li>                           
                       <li><a><i class="fa fa-euro"></i> Facturación <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="{{url('/invoicesMenu')}}">Facturar</a></li>
-                          <li><a href="{{url('/invoicesList')}}">Listados</a></li>                      
+                          <li><a href="{{url('/invoicesMenu')}}">Emisión facturas</a></li>
+                          <li><a href="{{url('/invoicesList')}}">Listado facturas</a></li>
+                          <li><a href="{{url('/customerInvoicesList')}}">Facturación clientes</a></li>                           
                         </ul>
                       </li>
 
