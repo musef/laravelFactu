@@ -39,7 +39,7 @@ class CustomerController extends Controller
             $messageWrong='Error leyendo la lista de clientes';
         } catch (QueryException $quex) {
             $customers=null;
-            $messageWrong='Error en Base de Datos leyendo la lista de clientes - Error QC001';
+            $messageWrong='Error en Base de Datos leyendo la lista de clientes';
         }
         
         return view('customers/listCustomers')
@@ -73,7 +73,7 @@ class CustomerController extends Controller
             $messageWrong='Error leyendo la lista de forma de pagos';
         } catch (QueryException $quex) {
             $customers=null;
-            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos - Error QC002';
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
         }
         
         // mostramos formulario
@@ -131,7 +131,7 @@ class CustomerController extends Controller
             } catch (QueryException $quex) {
                 $customer=new Customer;                
                     // error Dato
-                $messageWrong='Error: no ha sido posible grabar el cliente - Error QC003';
+                $messageWrong='Error: no ha sido posible grabar el cliente';
             }
 
             try {
@@ -142,7 +142,7 @@ class CustomerController extends Controller
                 $messageWrong='Error leyendo la lista de forma de pagos';
             } catch (QueryException $quex) {
                 $methods=null;
-                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos - Error QC004';
+                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
             }             
             
         } else {
@@ -196,7 +196,7 @@ class CustomerController extends Controller
                 $messageWrong='Error leyendo la lista de forma de pagos';
             } catch (QueryException $quex) {
                 $methods=null;
-                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos - Error QC005';
+                $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
             }            
             
         } else {
@@ -268,7 +268,7 @@ class CustomerController extends Controller
                 } catch (QueryException $quex) {
                     $customer=new Customer;
                      // error Dato
-                     $messageWrong='Error: no ha sido posible modificar el cliente - Error QC006';
+                     $messageWrong='Error: no ha sido posible modificar el cliente';
                 }       
 
             } else {
@@ -290,7 +290,7 @@ class CustomerController extends Controller
             $messageWrong='Error leyendo la lista de forma de pagos';
         } catch (QueryException $quex) {
             $methods=null;
-            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos - Error QC007';
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
         }          
                 
 
@@ -339,7 +339,7 @@ class CustomerController extends Controller
                 $messageWrong='Error: no ha sido posible eliminar el cliente';
             } catch (QueryException $quex) {
                 // error Dato
-                $messageWrong='Error: imposible eliminar el cliente porque tiene operaciones registradas en base de datos - Error QC008';
+                $messageWrong='Error: imposible eliminar el cliente porque tiene operaciones registradas en base de datos.';
             }            
             
             try {
@@ -355,7 +355,7 @@ class CustomerController extends Controller
                 $customers=null;
             } catch (QueryException $quex) {
                 // error Dato
-                $messageWrong='Error de base de datos: no ha sido posible obtener la lista de clientes - Error QC009';
+                $messageWrong='Error de base de datos: no ha sido posible obtener la lista de clientes';
                 $customers=null;
             }            
 
@@ -400,7 +400,7 @@ class CustomerController extends Controller
             $messageWrong='Error leyendo la lista de pagos';
         } catch (QueryException $quex) {
             $methods=null;
-            $messageWrong='Error en Base de Datos leyendo la lista de pagos - Error QC010';
+            $messageWrong='Error en Base de Datos leyendo la lista de pagos';
         }        
            
         return view('customers/customersListBySelection')
@@ -453,7 +453,7 @@ class CustomerController extends Controller
                 $messageWrong='Error buscando los clientes por formulario';
             } catch (QueryException $quex) {
                 $customers=null;
-                $messageWrong='Error en Base de Datos buscando los clientes por formulario - Error QC011';
+                $messageWrong='Error en Base de Datos buscando los clientes por formulario';
             }             
   
         } else {
@@ -473,7 +473,7 @@ class CustomerController extends Controller
             $messageWrong='Error leyendo la lista de forma de pagos';
         } catch (QueryException $quex) {
             $methods=null;
-            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos - Error QC012';
+            $messageWrong='Error en Base de Datos leyendo la lista formas de pagos';
         }         
         
         return view('customers/customersListBySelection')

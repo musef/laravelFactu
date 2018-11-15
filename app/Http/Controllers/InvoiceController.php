@@ -52,7 +52,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI001';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }          
         
         return view('invoices/invoicesMenu')
@@ -165,7 +165,7 @@ class InvoiceController extends Controller
                 // generamos un objeto en blanco
                 $works=null;
                 $customers=null;            
-                $messageWrong='Error en base de datos obteniendo albaranes - Error QI002';
+                $messageWrong='Error en base de datos obteniendo albaranes';
 
             }     
             
@@ -181,7 +181,7 @@ class InvoiceController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI003';
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }            
             
         } else {
@@ -312,7 +312,7 @@ class InvoiceController extends Controller
                 // generamos un objeto en blanco
                 $works=null;
                 $customers=null;            
-                $messageWrong='Error en base de datos obteniendo albaranes - Error QI004';
+                $messageWrong='Error en base de datos obteniendo albaranes';
 
             }
             
@@ -521,7 +521,7 @@ class InvoiceController extends Controller
                         $messageWrong='Error grabando facturas';
                     } catch (QueryException $quex) {
                         $errors=true;
-                        $messageWrong='Error en base de datos grabando facturas - Error QI005';
+                        $messageWrong='Error en base de datos grabando facturas';
                     }                     
                     
                     if ($errors===false) $messageOK='Facturación realizada correctamente';
@@ -612,7 +612,7 @@ class InvoiceController extends Controller
                             $messageWrong='Error grabando facturas';
                         } catch (QueryException $quex) {
                             $errors=true;
-                            $messageWrong='Error en base de datos grabando facturas - Error QI006';
+                            $messageWrong='Error en base de datos grabando facturas';
                         } 
                     }
                     
@@ -633,7 +633,7 @@ class InvoiceController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI007';
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }            
             
         } else {
@@ -686,7 +686,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI008';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }         
                         
         return view('invoices/invoicesListBySelection')
@@ -821,7 +821,7 @@ class InvoiceController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI009';
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }            
             
         } else {
@@ -955,33 +955,13 @@ class InvoiceController extends Controller
                 $invoices=null;
                 $customers=null;
                 $messageWrong='Error en base de datos obteniendo albaranes';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);                 
 
             } catch (QueryException $quex) {
 
                 // generamos un objeto en blanco
                 $invoices=null;
                 $customers=null;            
-                $messageWrong='Error en base de datos obteniendo albaranes - Error QI010';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);             
+                $messageWrong='Error en base de datos obteniendo albaranes';
 
             }                 
             
@@ -990,16 +970,6 @@ class InvoiceController extends Controller
                 // generamos un objeto en blanco
                 $invoices=null;
                 $customers=null;
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);                 
         }   
                         
         // cabecera de la factura
@@ -1135,7 +1105,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI011';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }         
                         
         return view('invoices/invoice')
@@ -1215,7 +1185,7 @@ class InvoiceController extends Controller
                 $messageWrong='Error procesando el borrado de una factura';
 
             } catch (QueryException $quex) {
-                $messageWrong='Error en base de datos procesando el borrado de una factura - Error QI012';
+                $messageWrong='Error en base de datos procesando el borrado de una factura';
 
             }            
         } else {
@@ -1293,32 +1263,11 @@ class InvoiceController extends Controller
         } catch (Exception $ex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error obteniendo factura pdf';
-            // parametros de búsqueda
-            $parameters=['cust'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>'','invnumber'=>''];                
-            return view('invoices/invoicesListBySelection')
-                ->with('invoices',null)
-                ->with('customersSel',null)
-                ->with('parameters',$parameters) 
-                ->with('totalList',0)                 
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);             
-            
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo factura pdf - Error QI013';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);             
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }        
                
         // cabecera de la factura
@@ -1578,31 +1527,11 @@ class InvoiceController extends Controller
         } catch (Exception $ex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error obteniendo generando un fichero pdf';
-            // parametros de búsqueda
-            $parameters=['cust'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>'','invnumber'=>''];                
-            return view('invoices/invoicesListBySelection')
-                ->with('invoices',null)
-                ->with('customersSel',null)
-                ->with('parameters',$parameters) 
-                ->with('totalList',0)                 
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);             
+            $messageWrong='Error obteniendo la lista de los clientes de la empresa';
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos generando un fichero pdf - Error QI014';
-            // parametros de búsqueda
-            $parameters=['cust'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>'','invnumber'=>''];                
-            return view('invoices/invoicesListBySelection')
-                ->with('invoices',null)
-                ->with('customersSel',null)
-                ->with('parameters',$parameters) 
-                ->with('totalList',0)                 
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);             
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }        
                
         // cabecera de la factura
@@ -1816,7 +1745,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI015';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }          
         
         return view('invoices/customerInvoicesSum')
@@ -2019,15 +1948,15 @@ class InvoiceController extends Controller
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error generando listado resumen facturación de clientes';                 
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos generando listado resumen facturación de clientes - Error QI016';               
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }
             
         } else {            
-            $messageWrong='El usuario no pertenece a la empresa del listado';           
+            $messageWrong='El usuario no pertenece a la empresa del listado';            
         }
         
         
@@ -2043,7 +1972,7 @@ class InvoiceController extends Controller
         } catch (QueryException $quex) {
             // generamos un objeto en blanco
             $customers=null;
-            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI017';
+            $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
         }          
         
         $totals=['base0'=>$sumbas0,'cuota0'=> $sumcuo0,
@@ -2246,45 +2175,15 @@ class InvoiceController extends Controller
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error generando listado pdf resumen facturación de clientes';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);                
+                $messageWrong='Error obteniendo la lista de los clientes de la empresa';
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos generando listado pdf resumen facturación de clientes - Error QI018';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);                
+                $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa';
             }
             
         } else {            
-            $messageWrong='El usuario no pertenece a la empresa del listado';
-                // parametros de búsqueda
-                $parameters=['cust'=>0,'fechini'=> '',
-                    'fechfin'=> '','amount'=>'','invnumber'=>''];                
-                return view('invoices/invoicesListBySelection')
-                    ->with('invoices',null)
-                    ->with('customersSel',null)
-                    ->with('parameters',$parameters) 
-                    ->with('totalList',0)                 
-                    ->with('messageOK',null)
-                    ->with('messageWrong',$messageWrong);            
+            $messageWrong='El usuario no pertenece a la empresa del listado';            
         }
         
          // cabecera de la factura

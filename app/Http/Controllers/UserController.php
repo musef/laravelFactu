@@ -98,7 +98,7 @@ class UserController extends Controller
                 $messageWrong='Error grabando los datos del usuario. No se ha grabado ningún dato.';                 
             } catch (QueryException $quex) {
                 $user=new User;
-                $messageWrong='Error de base de datos grabando los datos del usuario. - Error QU001';
+                $messageWrong='Error de base de datos grabando los datos del usuario.';
             }
 
             try {
