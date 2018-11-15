@@ -24,6 +24,7 @@ class InvoiceController extends Controller
     }
     
     
+    
     /**
      * Esta función muestra el menú de facturación de albaranes
      * @return type

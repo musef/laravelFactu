@@ -88,6 +88,7 @@ class UserController extends Controller
             if (strlen($pass)>7 && strlen($pass)<16 && $pass!==$this->PASSWORD_FAKE) $user->password= Hash::make($pass);
             else $messageWrong.='Longitud inadecuada de password. No se modifica.<br />';            
 
+            
             try {
             
                 // grabamos

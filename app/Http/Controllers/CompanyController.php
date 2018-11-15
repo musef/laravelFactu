@@ -245,6 +245,7 @@ class CompanyController extends Controller
         $method->diff=$diff;
         $method->payment_day=$day;
 
+        
         //mensajes
         $messageOK=$messageWrong=null;
         

@@ -1531,6 +1531,7 @@ class WorkController extends Controller
                 ->with('messageWrong',$messageWrong);
         }        
                
+        
         // cabecera del albarán
         $data='
             <head>

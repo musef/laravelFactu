@@ -11,9 +11,11 @@ use App\IvaRates;
 
 class IvaController extends Controller
 {
+    
     public function __construct() {
         $this->middleware('auth');
     }
+    
     
     /**
      * Esta función muestra un listado de tipos de IVA creados para la empresa
