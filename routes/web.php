@@ -22,7 +22,6 @@ Route::get('factulogin',function(){
 });
 
 
-
 Route::get('/home', 'HomeController@index')->name('home');
 
 /* **** RUTAS DE USUARIOS **** */
@@ -84,3 +83,11 @@ Route::post('showPdfInvoice/{id?}','InvoiceController@showPdfInvoice');
 Route::match(['get','post'],'customerInvoicesList','InvoiceController@customerInvoicesMenu');
 Route::post('showSumatoryInvoices','InvoiceController@showSumatoryInvoices');
 Route::post('sumatoryInvoicesPdf','InvoiceController@sumatoryInvoicesPdf');
+
+
+/**
+ * Redirección página no encontrada
+ */
+Route::fallback(function () {
+    return view('/errors/404');
+});
