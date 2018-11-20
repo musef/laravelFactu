@@ -240,7 +240,7 @@
                           </div>
                         </div>
                     @elseif (isset($works))
-                    <div class="x_panel alert alert-warning">No hay ningún albarán en la selección efectuada</div>                    
+                    <div class="x_panel alert alert-danger">No hay ningún albarán en la selección efectuada</div>                    
                     @endif
                 </form>
               </div>										

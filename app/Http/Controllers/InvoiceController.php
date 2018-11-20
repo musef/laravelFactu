@@ -14,6 +14,8 @@ use App\Invoice;
 use App\PaymentMethod;
 use App\IvaRates;
 use App\Company;
+use App\Config;
+
 
 
 class InvoiceController extends Controller
@@ -125,7 +127,7 @@ class InvoiceController extends Controller
         // si no se da, serán todos
         if (strlen($worknumber)<1) $alb='';
         else $alb=$worknumber;
-        //die ($alb);
+
         // CLIENTE
         // si no se da, serán todos
         if ($idcustomer<1) $idcustomer='%%';
@@ -358,7 +360,7 @@ class InvoiceController extends Controller
                             // acumulación o cuando es el primer albaran
                            if ($number==0) {
                                // es el primer albaran por lo que acumulamos
-                                $number=$this->generateNextInvoiceNumber($idcompany, $invdate, '');
+                                $number=$this->generateNextInvoiceNumber($idcompany, $invdate);
                                 // y actualizamos el cliente con el cliente anterior
                                 $idcust=$idcu;
                            }
@@ -400,7 +402,7 @@ class InvoiceController extends Controller
                             $pmeth=$this->getPaymentMethod($idcust);
                             $invoice->idmethod=$pmeth;
                             $invoice->inv_date= converterDateToDDBB($invdate);
-                            $number=$this->generateNextInvoiceNumber($idcompany, $invdate, '');
+                            $number=$this->generateNextInvoiceNumber($idcompany, $invdate);
                             $invoice->inv_number=$number;
                             $expiration=$this->getExpiration($pmeth,date('d-m-Y'));
                             $invoice->inv_expiration=$expiration;
@@ -464,7 +466,6 @@ class InvoiceController extends Controller
                                 $c0=$b0*$ivarate/100;
                             }
 
-                            die ('***ac'.$c3);
                             // guardamos el id del albaran para actualizar al grabar
                             $worklist[]=$work->id;
 
@@ -483,7 +484,7 @@ class InvoiceController extends Controller
                     $pmeth=$this->getPaymentMethod($idcust);
                     $invoice->idmethod=$pmeth;
                     $invoice->inv_date= converterDateToDDBB($invdate);
-                    $number=$this->generateNextInvoiceNumber($idcompany, $invdate, '');
+                    $number=$this->generateNextInvoiceNumber($idcompany, $invdate);
                     $invoice->inv_number=$number;
                     $expiration=$this->getExpiration($pmeth,date('d-m-Y'));
                     $invoice->inv_expiration=$expiration;
@@ -540,7 +541,7 @@ class InvoiceController extends Controller
 
                         $pmeth=$this->getPaymentMethod($work->idcustomer);
                         $expiration=$this->getExpiration($pmeth,date('d-m-Y'));
-                        $number=$this->generateNextInvoiceNumber($idcompany, $invdate, '');
+                        $number=$this->generateNextInvoiceNumber($idcompany, $invdate);
                         $idco=$work->idcompany;
                         $idcu=$work->idcustomer;
                         $idme=0;
@@ -756,7 +757,7 @@ class InvoiceController extends Controller
         // si no se da, serán todos
         if (strlen($invnumber)<1) $inv='';
         else $inv=$invnumber;
-        //die ($alb);
+        
         // CLIENTE
         // si no se da, serán todos
         if ($idcustomer<1) $idcustomer='%%';        
@@ -907,7 +908,7 @@ class InvoiceController extends Controller
             $inv=$invnumber;
             $textlist.=' - Solo la factura seleccionada';            
         }
-        //die ($alb);
+        
         // CLIENTE
         // si no se da, serán todos
         if ($idcustomer<1) {
@@ -1035,36 +1036,43 @@ class InvoiceController extends Controller
                     </div>';
         
         $count=0;
-        foreach ($invoices as $invoice) {
-            $data.='
-                    <div style="width:100%;" >                        
-                        <input type="text" value="'.$invoice->inv_number.'" style="width:15%;height:50px;border:none;" >
-                        <input type="text" value="'.$invoice->name.'" style="width:44%;height:50px;border:none;text-align:left" >
-                        <input type="text" value="'.converterDate($invoice->inv_date).'" style="width:12%;height:50px;border:none;text-align:center" >
-                        <input type="text" value="'.number_format($invoice->inv_total,2,',','.').' €" style="width:15%;height:50px;border:none;;text-align:right" >
-                        <input type="text" value="'.converterDate($invoice->inv_expiration).'" style="width:12%;height:50px;border:none;;text-align:center" >
-                    </div>';
-            $count++;
-            // paginamos
-            if ($count>=25) {
-                // pie de la factura
-                $count=0;
-                $data.='</div><br /><br />
-                           
-                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
-                <h2>Listado de facturas</h2>
-                <p>'.$textlist.'</p>
-                </div>
-                <div style="min-height:500px;border:1px solid black" >
-                    <div style="width:100%;" >
-                        <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
-                        <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
-                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                    </div>';               
-            }            
-        }
+        if (isset($invoices) && count($invoices)>0) {
+            foreach ($invoices as $invoice) {
+                $data.='
+                        <div style="width:100%;" >                        
+                            <input type="text" value="'.$invoice->inv_number.'" style="width:15%;height:50px;border:none;" >
+                            <input type="text" value="'.$invoice->name.'" style="width:44%;height:50px;border:none;text-align:left" >
+                            <input type="text" value="'.converterDate($invoice->inv_date).'" style="width:12%;height:50px;border:none;text-align:center" >
+                            <input type="text" value="'.number_format($invoice->inv_total,2,',','.').' €" style="width:15%;height:50px;border:none;;text-align:right" >
+                            <input type="text" value="'.converterDate($invoice->inv_expiration).'" style="width:12%;height:50px;border:none;;text-align:center" >
+                        </div>';
+                $count++;
+                // paginamos
+                if ($count>=25) {
+                    // pie de la factura
+                    $count=0;
+                    $data.='</div><br /><br />
+
+                    <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                    <h2>Listado de facturas</h2>
+                    <p>'.$textlist.'</p>
+                    </div>
+                    <div style="min-height:500px;border:1px solid black" >
+                        <div style="width:100%;" >
+                            <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
+                            <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
+                            <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                            <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
+                            <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                        </div>';               
+                }            
+            }
+        } else {
+            $data.='                
+            <div style="width:100%;" >                        
+               <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
+            </div>';            
+        }        
         $data.='</div>';
         
         
@@ -1238,8 +1246,6 @@ class InvoiceController extends Controller
         
         // mensajes
         $messageOK=$messageWrong=null;
-        
-        $pie='Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx';
       
         // tomamos el id de la factura por formulario, si es que estamos en edición
         // individual de la factura
@@ -1492,6 +1498,10 @@ class InvoiceController extends Controller
             </div>';
      
         // pie de la factura
+        
+        // obtenemos el pie de las configuraciones de empresa        
+        $pie=$this->getInvoiceFooter($idcomp);
+        
         $data.='
             <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
             <p>'.$pie.'</p>
@@ -1518,8 +1528,6 @@ class InvoiceController extends Controller
         
         // mensajes
         $messageOK=$messageWrong=null;
-        
-        $pie='Empresa tal y tal con NIF tal e inscrita en el registro tal y tal con el número xxxxxx tomo xxxxxx seccion xxxxxxxxxx pagina xxxxx';
       
         // tomamos el id de la factura por formulario, si es que estamos en edición
         // individual de la factura
@@ -1761,6 +1769,10 @@ class InvoiceController extends Controller
             </div>';
      
         // pie de la factura
+        
+        // obtenemos el pie de las configuraciones de empresa        
+        $pie=$this->getInvoiceFooter($idcomp);
+        
         $data.='
             <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
             <p>'.$pie.'</p>
@@ -2032,6 +2044,8 @@ class InvoiceController extends Controller
         }
         
         
+        if (is_null($invoices) || count($invoices)<1) $messageWrong='No se han obtenido resultados en la búsqueda';
+        
         try {   
             // obtenemos los clientes de la empresa
             $customers= Customer::where('idcompany',$idcomp)
@@ -2046,6 +2060,8 @@ class InvoiceController extends Controller
             $customers=null;
             $messageWrong='Error en base de datos obteniendo la lista de los clientes de la empresa - Error QI017';
         }          
+        
+        
         
         $totals=['base0'=>$sumbas0,'cuota0'=> $sumcuo0,
             'base1'=>$sumbas1,'cuota1'=> $sumcuo1,
@@ -2339,58 +2355,65 @@ class InvoiceController extends Controller
                         <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
                 </tr>';        
         $count=0;
-        foreach ($invoices as $invoice) {
-            $data.='
-                    <tr>                     
-                        <td colspan="1" style="text-align:left"><label>'.substr($invoice['name'],0,35).'</label ></td>
-                        <td><label>'.number_format($invoice['base0'],2,',','.').'</label ></td>
-                        <td><label>'.number_format($invoice['cuota0'],2,',','.').'</label ></td> 
-                        <td><label>'.number_format($invoice['base1'],2,',','.').'</label ></td>
-                        <td><label>'.number_format($invoice['cuota1'],2,',','.').'</label ></td> 
-                        <td><label>'.number_format($invoice['base2'],2,',','.').'</label ></td>
-                        <td><label>'.number_format($invoice['cuota2'],2,',','.').'</label ></td> 
-                        <td><label>'.number_format($invoice['base3'],2,',','.').'</label ></td>
-                        <td><label>'.number_format($invoice['cuota3'],2,',','.').'</label ></td>                        
-                        <td><label>'.number_format($invoice['total'],2,',','.').'</label ></td>
-                    </tr>';
-            $count++;
-            // paginamos
-            if ($count>=35) {
-                // pie de la factura
-                $count=0;
-                $data.='</div></table><br />
-                           
-                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
-                <h2>Listado de facturación por cliente</h2>
-                <p>'.$textlist.'</p>
-                </div>
-                <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
-                    <tr>   
-                            <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                            <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
-                            <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+        if (!is_null($invoices)) {            
+            foreach ($invoices as $invoice) {
+                $data.='
+                        <tr>                     
+                            <td colspan="1" style="text-align:left"><label>'.substr($invoice['name'],0,35).'</label ></td>
+                            <td><label>'.number_format($invoice['base0'],2,',','.').'</label ></td>
+                            <td><label>'.number_format($invoice['cuota0'],2,',','.').'</label ></td> 
+                            <td><label>'.number_format($invoice['base1'],2,',','.').'</label ></td>
+                            <td><label>'.number_format($invoice['cuota1'],2,',','.').'</label ></td> 
+                            <td><label>'.number_format($invoice['base2'],2,',','.').'</label ></td>
+                            <td><label>'.number_format($invoice['cuota2'],2,',','.').'</label ></td> 
+                            <td><label>'.number_format($invoice['base3'],2,',','.').'</label ></td>
+                            <td><label>'.number_format($invoice['cuota3'],2,',','.').'</label ></td>                        
+                            <td><label>'.number_format($invoice['total'],2,',','.').'</label ></td>
+                        </tr>';
+                $count++;
+                // paginamos
+                if ($count>=35) {
+                    // pie de la factura
+                    $count=0;
+                    $data.='</div></table><br />
 
-                    </tr>
-                    <tr>
-                            <td style="height:18px;font-weight:bold;"><label></label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                            <td style="height:18px;font-weight:bold;"><label>General</label></td> 
-                            <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
-                            <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
-                    </tr>';               
-            }            
+                    <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                    <h2>Listado de facturación por cliente</h2>
+                    <p>'.$textlist.'</p>
+                    </div>
+                    <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
+                        <tr>   
+                                <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
+                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
+                                <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+
+                        </tr>
+                        <tr>
+                                <td style="height:18px;font-weight:bold;"><label></label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
+                                <td style="height:18px;font-weight:bold;"><label>General</label></td> 
+                                <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
+                                <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
+                        </tr>';               
+                }            
+            }
+        } else {
+            $data.='<tr>                     
+                        <td colspan="10" style="text-align:left"><label>No se han obtenido datos</label ></td>
+                          
+                    </tr>';            
         }
         $data.='
                 <tr>
@@ -2429,76 +2452,230 @@ class InvoiceController extends Controller
      * Ejemplo sin serial una factura de junio 2018: 201806000000023 
      * @param type $idcompany
      */
-    private function generateNextInvoiceNumber($idcompany,$thisdate,$serial='') {
+    private function generateNextInvoiceNumber($idcompany,$thisdate) {
         
-        // el serial esta separado por barras. Hay que buscar
-        // primero todos los números que correspondan con el año-mes
-        // de thisdate
-        // FORMATO FACTURA: SERIAL/YYYYMM000000001 (total debe medir 15)
-        $search=substr($thisdate,6,4).substr($thisdate,3,2);
+        // primeramente hay que conocer el tipo de numero de factura:
+        // 1 - formato aaaamm ; 2 -formato solo número
+        $typeprefix=2;
         
-        $invoices= Invoice::where([
-            ['inv_number','LIKE','%'.$search.'%'],
-            ['idcompany',$idcompany]
-        ])
-            ->select('inv_number')
-            ->orderBy('inv_number','DESC')->first();
+        // si tiene serial, hay que tomarlo. El serial son alfanumerico hasta 3 chars
+        // por defecto empty
+        $serial='';
         
-        if (is_null($invoices)) {
-            // no hay ningun albaran en ese mes
+        // también hay que conocer la longitud del número de factura
+        // que por defecto es 15, pero se admite entre 12 y 20
+        $numLength=15;
+        
+        try {
+            // buscar invoiceNote de la empresa
+            $prefix= Config::where([
+                ['idcompany',$idcompany],
+                ['name','invoicePrefix']
+            ])->first();
             
-            if (strlen($serial)<1) {
-                // no tenemos numero de serie
-                $number=$search.'000000001';
+            if (is_null($prefix)) $typeprefix=2;
+            
+            // devuelve el contenido de invoiceNote
+            $typeprefix=$prefix->value;
+
+            // buscar invoicenumLength de la empresa
+            $num= Config::where([
+                ['idcompany',$idcompany],
+                ['name','invoicenumLength']
+            ])->first();
+            
+            if (is_null($num)) {
+                $numLength=15;
             } else {
-                $numprov=substr($serial,0,4).'/'.$search;
-                for ($n= strlen($numprov);$n<14;$n++) {
-                    // rellenamos con ceros hasta 14 long
-                    $numprov.='0';
+                // devuelve el contenido de invoicenumLength, con limites 12 y 15 - default 15
+                if ($num->value<12) {
+                    $numLength=12;                
+                } elseif ($num->value>15) {
+                    $numLength=15; 
+                } else {
+                    $numLength=$num->value;
                 }
-                $number=$numprov.'1';
             }
+            
+            // buscar invoiceSerial de la empresa
+            $ser= Config::where([
+                ['idcompany',$idcompany],
+                ['name','invoiceSerial']
+            ])->first();
+            
+            if (is_null($ser)) $serial='';
+            
+            // devuelve el contenido de invoiceSerial
+            $serial=$ser->value;
+
+            
+        } catch (Exception $ex) {
+            // error
+            $typeprefix=2;
+            $numLength=15;
+            $serial='';
+        } catch (QueryException $quex) {
+            // error
+            $typeprefix=2;
+            $numLength=15;
+            $serial='';
+        }        
         
-            return $number;
         
+        if ($typeprefix==1 || $typeprefix=="1") {
+
+            // el serial esta separado por barras. Hay que buscar
+            // primero todos los números que correspondan con el año-mes
+            // de thisdate
+            // FORMATO FACTURA: SERIAL/YYYYMM000000001 (total debe medir 15)
+            $search=substr($thisdate,6,4).substr($thisdate,3,2);
+
+            $invoices= Invoice::where([
+                ['inv_number','LIKE','%'.$search.'%'],
+                ['idcompany',$idcompany]
+            ])
+                ->select('inv_number')
+                ->orderBy('inv_number','DESC')->first();
+
+            if (is_null($invoices)) {
+                // no hay ninguna factura en ese mes
+
+                if (strlen($serial)<1) {
+                    // no tenemos numero de serie
+                    $number=$search.'000000001';
+                } else {
+                    $numprov=substr($serial,0,4).'/'.$search;
+                    for ($n= strlen($numprov);$n<14;$n++) {
+                        // rellenamos con ceros hasta 14 long
+                        $numprov.='0';
+                    }
+                    $number=$numprov.'1';
+                }
+
+                return $number;
+
+
+            } else {
+                // obtenemos el ultimo valor grabado
+                $lastnum=$invoices->inv_number;
+                // comprobamos si es un numero
+                $num=str_after($lastnum, $search);
+                if (is_numeric($num)) {
+                    // siguiente numero
+                    $nextnum=$num+1;    
+                } else {
+                    // por algun motivo no es numerico
+                    // es el primer numero
+                    $nextnum=1;
+                }
+
+                // componemos el numero en funcion de si tiene numero
+                // de serie o no
+                if (strlen($serial)<1) {
+                    // no tenemos numero de serie
+                    $chain='00000000'.$nextnum;
+                    $chain= substr($chain, -9);
+                    // search mide 6 y chain debe medir 9
+                    $number=$search.$chain;
+                } else {
+                    // tenemos numero de serie de longitud variable,
+                    // por lo que llenamos chain de ceros y luego cortamos
+                    // al tamaño adecuado
+                    $numprov=substr($serial,0,4).'/'.$search;
+                    $chain='00000000'.$nextnum;
+                    $lengthNeeded=strlen($numprov)-15; // en negativo
+                    $chain= substr($chain, $lengthNeeded);
+
+                    $number=$numprov.$chain;
+                }
+
+                return $number;
+
+            } 
             
         } else {
-            // obtenemos el ultimo valor grabado
-            $lastnum=$invoices->inv_number;
-            // comprobamos si es un numero
-            $num=str_after($lastnum, $search);
-            if (is_numeric($num)) {
-                // siguiente numero
-                $nextnum=$num+1;    
+                
+            // el serial esta separado por barras. Hay que buscar
+            // primero el ultimo numero
+            // FORMATO FACTURA: SERIAL/000000000000001 (total debe medir $numLength)
+
+            $invoices= Invoice::where([
+                ['idcompany',$idcompany]
+            ])
+                ->select('inv_number')
+                ->orderBy('inv_number','DESC')->first();
+
+            if (is_null($invoices)) {
+                // no hay ninguna factura aún
+
+                if (strlen($serial)<1) {
+                    // no tenemos numero de serie
+                    $numprov='';
+                    for ($n= 0;$n<($numLength-1);$n++) {
+                        // rellenamos con ceros hasta 14 long
+                        $numprov.='0';
+                    }
+                    $number=$numprov.'1';
+                } else {
+                    $numprov=substr($serial,0,3).'/';
+                    for ($n= strlen($numprov);$n<($numLength-1);$n++) {
+                        // rellenamos con ceros hasta 14 long
+                        $numprov.='0';
+                    }
+                    $number=$numprov.'1';
+                }
+
+                return $number;
+
+
             } else {
-                // por algun motivo no es numerico
-                // es el primer numero
-                $nextnum=1;
-            }
+                // obtenemos el ultimo valor grabado
+                $lastnum=$invoices->inv_number;
+                // comprobamos si es un numero
+                $num=str_after($lastnum, $serial.'/');
+                if (is_numeric($num)) {
+                    // siguiente numero
+                    $nextnum=$num+1;    
+                } else {
+                    // por algun motivo no es numerico
+                    // es el primer numero ¿?
+                    $nextnum=1;
+                }
+
+                // componemos el numero en funcion de si tiene numero
+                // de serie o no
+                if (strlen($serial)<1) {
+                    // no tenemos numero de serie
+                    $chain='00000000000000000000'.$nextnum;
+                    $chain= substr($chain, -($numLength));
+                    // chain debe medir 15
+                    $number=$chain;
+                    
+                } else {
+                    // tenemos numero de serie de longitud variable,
+                    // por lo que llenamos chain de ceros y luego cortamos
+                    // al tamaño adecuado
+                    
+                   $numprov=substr($serial,0,3).'/';
+                   $chain='';
+                    for ($n= strlen($numprov);$n<($numLength-1);$n++) {
+                        // rellenamos con ceros hasta 14 long
+                        $chain.='0';
+                    }
+                    $chain.=$nextnum;
+                    // recortamos la cadena empezando por detrás
+                    $chain=substr($chain,-($numLength-strlen($numprov)));
+                    $number=$numprov.$chain;
+                    
+                }
+                return $number;
+
+            }             
             
-            // componemos el numero en funcion de si tiene numero
-            // de serie o no
-            if (strlen($serial)<1) {
-                // no tenemos numero de serie
-                $chain='00000000'.$nextnum;
-                $chain= substr($chain, -9);
-                // search mide 6 y chain debe medir 9
-                $number=$search.$chain;
-            } else {
-                // tenemos numero de serie de longitud variable,
-                // por lo que llenamos chain de ceros y luego cortamos
-                // al tamaño adecuado
-                $numprov=substr($serial,0,4).'/'.$search;
-                $chain='00000000'.$nextnum;
-                $lengthNeeded=strlen($numprov)-15; // en negativo
-                $chain= substr($chain, $lengthNeeded);
-                                
-                $number=$numprov.$chain;
-            }
-            
-            return $number;
-            
-        }                            
+        }
+        
+        
+                           
         
     }
     
@@ -2621,5 +2798,39 @@ class InvoiceController extends Controller
             return array(0,0);
         }        
     }
+    
+    
+    
+    /**
+     * Esta función devuelve un String con el pie que va a ser incluído en
+     * la factura. Si algo falla o no la encuentra, devuelve empty
+     * Este texto se obtiene de las configuraciones de empresa, y suele contener
+     * los datos registrales de la empresa
+     */
+    private function getInvoiceFooter($idcomp) {
+        
+        try {
+            // buscar invoiceNote de la empresa
+            $pie= Config::where([
+                ['idcompany',$idcomp],
+                ['name','invoiceNote']
+            ])->first();
+            
+            if (is_null($pie)) return "";
+            
+            // devuelve el contenido de invoiceNote
+            return $pie->value;
+            
+        } catch (Exception $ex) {
+            // error
+            return "";
+        } catch (QueryException $quex) {
+            // error
+            return "";
+        }
+       
+        
+    }
+    
     
 }

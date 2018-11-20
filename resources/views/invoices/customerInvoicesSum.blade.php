@@ -134,25 +134,27 @@
                                     </tr>
                                 </thead> 
                                   <tbody id="bodytable">
-                                    @foreach ($invoices as $invoice)
-                                          @if ($loop->iteration > 10)
-                                            {{-- utilizamos loop para el id del tr y para habilitar solamente los 10 primeros registros --}}
-                                          <tr id="{{($loop->iteration)}}" style="display:none">                                               
-                                          @else
-                                          <tr id="{{($loop->iteration)}}">                                  
-                                          @endif
-                                            <td>{{$invoice['name']}}</td>
-                                            <td class="text-right">{{number_format($invoice['base0'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['cuota0'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['base1'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['cuota1'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['base2'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['cuota2'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['base3'],2,',','.')}}</td>
-                                            <td class="text-right">{{number_format($invoice['cuota3'],2,',','.')}}</td>                                            
-                                            <td class="text-right">{{number_format($invoice['total'],2,',','.')}}</td> 
-                                          </tr>
-                                      @endforeach
+  
+                                        @foreach ($invoices as $invoice)
+                                              @if ($loop->iteration > 10)
+                                                {{-- utilizamos loop para el id del tr y para habilitar solamente los 10 primeros registros --}}
+                                              <tr id="{{($loop->iteration)}}" style="display:none">                                               
+                                              @else
+                                              <tr id="{{($loop->iteration)}}">                                  
+                                              @endif
+                                                <td>{{$invoice['name']}}</td>
+                                                <td class="text-right">{{number_format($invoice['base0'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['cuota0'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['base1'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['cuota1'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['base2'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['cuota2'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['base3'],2,',','.')}}</td>
+                                                <td class="text-right">{{number_format($invoice['cuota3'],2,',','.')}}</td>                                            
+                                                <td class="text-right">{{number_format($invoice['total'],2,',','.')}}</td> 
+                                              </tr>
+                                        @endforeach
+
                                       @isset($totals)
                                       <tr><td colspan="10"><hr></td> </tr>
                                           <tr>                                  
@@ -214,9 +216,6 @@
                 </form>
               </div>										
         </div>
-                    
-                    
-
                    
             @if (isset($messageOK) && !is_null($messageOK))
             <div class="alert alert-success">{{$messageOK}}</div>

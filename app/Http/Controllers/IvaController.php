@@ -24,7 +24,7 @@ class IvaController extends Controller
      * 
      * @return type
      */
-    public function showIvaTypes() {
+    public function ivaTypesMenu() {
         
         // compañia del usuario
         $idcomp=Auth::guard('')->user()->idcompany;             
@@ -352,7 +352,7 @@ class IvaController extends Controller
                 $messageW=' - Tipo de IVA incorrecto.';
                 $error=true;
             }            
-            //die ('***'.$active);
+
             ($active=='OFF' || $active=='ON') ? $active=1 : $active=0;
             
             // si hay errores en la comprobación no procedemos a grabar

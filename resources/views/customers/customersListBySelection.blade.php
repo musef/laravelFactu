@@ -66,7 +66,7 @@
                                         <button type="reset" class="btn btn-info" title="Borrar los datos del formulario" >
                                             <i class='fa fa-eraser'></i> Borrar</button>
 
-                                        <button type="submit" class="btn btn-info" title="Buscar vehículo" formaction="{{url('locateCustomersByOptions')}}" >
+                                        <button type="submit" class="btn btn-info" title="Buscar clientes" formaction="{{url('locateCustomersByOptions')}}" >
                                             <i class="fa fa-search-minus"></i> Buscar</button>
                                     </td>                                
                                 </tr>                                                                      

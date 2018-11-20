@@ -25,7 +25,7 @@ class CompanyController extends Controller
      * de la empresa.
      * ATENCION: Por diseño, solo hay una empresa, con el id=1
      */    
-    public function showCompanyProfile() 
+    public function showCompanyProfileMenu() 
     {
         
         // por diseño, cada usuario solo puede acceder a una empresa
@@ -114,7 +114,7 @@ class CompanyController extends Controller
      * Esta función lista los métodos de pagos de una compañia determinad por idcompany
      * @param type $idcompany
      */
-    public function listPaymentMethods() {
+    public function listPaymentMethodsMenu() {
         
         //obtenemos el objeto usuario autenticado
         $idcomp=Auth::guard('')->user()->idcompany;
@@ -313,7 +313,7 @@ class CompanyController extends Controller
      * @param type $id
      * @return type
      */
-    public function settings(Request $request) {
+    public function settingsMenu(Request $request) {
         
         //mensajes
         $messageOK=$messageWrong=null;
@@ -336,7 +336,7 @@ class CompanyController extends Controller
             $settings[$value['name']]=$value['value'];            
         }
 
-        $messageOK='Configuraciones obtenidas';
+        if (count($settings)>0) $messageOK='Configuraciones obtenidas';
   
         
         // mostramos la vista

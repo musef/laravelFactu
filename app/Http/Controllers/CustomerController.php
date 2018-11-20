@@ -21,7 +21,7 @@ class CustomerController extends Controller
      * Esta función muestra un listado de los clientes de una empresa con idcompany
      * @return type
      */
-    public function showListCustomers() {
+    public function listCustomersMenu() {
         
         // mensajes
         $messageWrong=$messageOK=null;
@@ -33,7 +33,7 @@ class CustomerController extends Controller
             // obtenemos la lista de clientes
             $customers= Customer::where('idcompany',$idcompany)
                 ->orderBy('customer_name')->get();  
-            if (is_null($customers) || count($customers)<1) $messageWrong='No hay ningún cliente en la lista';        
+            if (is_null($customers) || count($customers)<1) $messageWrong='No hay ningún cliente en la lista';   
         } catch (Exception $ex) {
             $customers=null;
             $messageWrong='Error leyendo la lista de clientes';
@@ -380,7 +380,7 @@ class CustomerController extends Controller
      * @param type $id
      * @return type
      */
-    public function showCustomersListBySelection($id=0) {
+    public function customersListBySelectionMenu($id=0) {
         
         // mensajes
         $messageWrong=$messageOK=null;
@@ -448,6 +448,7 @@ class CustomerController extends Controller
                     ['customer_city','like','%'.$city.'%'],
                     ['idmethod','like', $pmethod],
                 ])->get();
+                if (is_null($customers) || count($customers)<1) $messageWrong='No hay ningún cliente en la lista'; 
             } catch (Exception $ex) {
                 $customers=null;
                 $messageWrong='Error buscando los clientes por formulario';

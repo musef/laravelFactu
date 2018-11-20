@@ -25,7 +25,7 @@
               @csrf
               <input type="hidden" name="companyid" value="{{$company}}">
               
-            @if (isset($ivas) && !is_null($ivas))               
+            @if (isset($ivas) && count($ivas)>0)               
                 <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap dataTable no-footer dtr-inline" 
                        role="grid" aria-describedby="datatable-responsive_info" cellspacing="0">
                         <thead>

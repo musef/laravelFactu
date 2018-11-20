@@ -25,6 +25,7 @@
                 <p>En este formulario se puede editar/modificar algunas configuraciones de la aplicación para la empresa</p>
               <br>
               
+              @if (isset($settings) && count($settings)>0 )
               <form class="form-horizontal form-label-left input_mask" method="post">
                   @csrf
 
@@ -204,6 +205,10 @@
                 </div>
 
               </form>
+              @else
+              <h2>NO existe configuración para esta empresa.</h2>
+              <h2>Por favor, contacte con el soporte técnico para solucionar esta incidencia.</h2>
+              @endif
             </div>
         </div>
         @endguest

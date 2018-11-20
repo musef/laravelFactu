@@ -91,7 +91,7 @@
                                         <button type="reset" class="btn btn-info" title="Borrar los datos del formulario" >
                                             <i class='fa fa-eraser'></i> Borrar</button>
 
-                                        <button type="submit" class="btn btn-info" title="Listar albaranes pendientes de facturar" formaction="{{url('worksList')}}" >
+                                        <button type="submit" class="btn btn-info" title="Listar albaranes pendientes de facturar" formaction="{{url('worksToInvoicingList')}}" >
                                             <i class="fa fa-list-alt"></i> Listar</button>
                                             
                                         <button type="submit" class="btn btn-success" title="Facturar albaranes según selección del formulario" formaction="{{url('generateInvoices')}}" 

@@ -38,7 +38,7 @@ class WorkController extends Controller
      * @param type $id
      * @return type
      */
-    public function showWork(Request $request) {
+    public function worksMenu(Request $request) {
     
         // obtenemos el customerid, si se ha seleccionado en el select
         // esto no existe cuando entramos en el formulario
@@ -687,36 +687,44 @@ class WorkController extends Controller
                         <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
                     </div>';
         $count=0;
-        foreach ($works as $work) {
-            $data.='
-                        <div style="width:100%;" >                        
-                            <input type="text" value="'.$work->work_number.'" style="width:15%;height:50px;border:none;" >
-                            <input type="text" value="'.$work->name.'" style="width:25%;height:50px;border:none;text-align:left" >
-                            <input type="text" value="'.converterDate($work->work_date).'" style="width:12%;height:50px;border:none;text-align:center" >
-                            <input type="text" value="'.number_format($work->work_total,2,',','.').' €" style="width:12%;height:50px;border:none;;text-align:right" >
-                            <input type="text" value="'.$work->work_text.'" style="width:34.5%;height:50px;border:none;;text-align:left" >
-                        </div>';
-            $count++;
-            // paginamos
-            if ($count>=25) {
-                // pie de la factura
-                $count=0;
-                $data.='</div><br /><br />
-                           
-                <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
-                <h2>Listado de albaranes</h2>
-                <p>'.$textlist.'</p>
-                </div>
-                <div style="min-height:500px;border:1px solid black" >
-                    <div style="width:100%;" >
-                        <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
-                        <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
-                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
-                    </div>';                
-            }
+        if (isset($works) && count($works)>0) {
+            foreach ($works as $work) {
+                $data.='
+                            <div style="width:100%;" >                        
+                                <input type="text" value="'.$work->work_number.'" style="width:15%;height:50px;border:none;" >
+                                <input type="text" value="'.$work->name.'" style="width:25%;height:50px;border:none;text-align:left" >
+                                <input type="text" value="'.converterDate($work->work_date).'" style="width:12%;height:50px;border:none;text-align:center" >
+                                <input type="text" value="'.number_format($work->work_total,2,',','.').' €" style="width:12%;height:50px;border:none;;text-align:right" >
+                                <input type="text" value="'.$work->work_text.'" style="width:34.5%;height:50px;border:none;;text-align:left" >
+                            </div>';
+                $count++;
+                // paginamos
+                if ($count>=25) {
+                    // pie de la factura
+                    $count=0;
+                    $data.='</div><br /><br />
+
+                    <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
+                    <h2>Listado de albaranes</h2>
+                    <p>'.$textlist.'</p>
+                    </div>
+                    <div style="min-height:500px;border:1px solid black" >
+                        <div style="width:100%;" >
+                            <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
+                            <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
+                            <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                            <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
+                            <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
+                        </div>';                
+                }
+            }            
+        } else {
+            $data.='                
+            <div style="width:100%;" >                        
+               <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
+            </div>';            
         }
+
         $data.='</div>';
         
         

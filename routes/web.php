@@ -29,16 +29,16 @@ Route::match(['get','post'],'userProfile','UserController@showUserProfile');
 Route::post('changeUserProfile','UserController@changeUserProfile');
 
 /* **** RUTAS DE EMPRESA **** */
-Route::match(['get','post'],'companyProfile','CompanyController@showCompanyProfile');
+Route::match(['get','post'],'companyProfile','CompanyController@showCompanyProfileMenu');
 Route::post('changeCompanyProfile','CompanyController@changeCompanyProfile');
-Route::match(['get','post'],'paymentMethods','CompanyController@listPaymentMethods');
+Route::match(['get','post'],'paymentMethods','CompanyController@listPaymentMethodsMenu');
 Route::post('createPaymentMethod','CompanyController@createPaymentMethod');
 Route::post('editPaymentMethod/{id?}','CompanyController@editPaymentMethod');
 Route::post('changePaymentMethod','CompanyController@changePaymentMethod');
 Route::post('recordNewPaymentMethod','CompanyController@recordNewPaymentMethod');
 Route::post('deletePaymentMethod/{id?}','CompanyController@deletePaymentMethod');
-Route::match(['get','post'],'companySettings','CompanyController@settings');
-Route::match(['get','post'],'ivaTypes','IvaController@showIvaTypes');
+Route::match(['get','post'],'companySettings','CompanyController@settingsMenu');
+Route::match(['get','post'],'ivaTypes','IvaController@ivaTypesMenu');
 Route::post('editIva/{id?}','IvaController@showIva');
 Route::post('createIva','IvaController@showIva');
 Route::post('deleteIva/{id?}','IvaController@deleteIva');
@@ -47,17 +47,17 @@ Route::post('changeIva','IvaController@updateIva');
 Route::post('changeSettings','CompanyController@updateSettings');
 
 /* **** RUTAS DE CLIENTES **** */
-Route::match(['get','post'],'showCustomers','CustomerController@showListCustomers');
+Route::match(['get','post'],'showCustomers','CustomerController@listCustomersMenu');
 Route::post('createCustomer','CustomerController@createNewCustomer');
 Route::post('recordNewCustomer','CustomerController@recordNewCustomer');
 Route::post('editCustomer/{id?}','CustomerController@editCustomer');
 Route::post('changeCustomer','CustomerController@changeCustomer');
 Route::post('deleteCustomer/{id?}','CustomerController@deleteCustomer');
-Route::match(['get','post'],'customersList','CustomerController@showCustomersListBySelection');
+Route::match(['get','post'],'customersList','CustomerController@customersListBySelectionMenu');
 Route::post('locateCustomersByOptions','CustomerController@locateCustomersByOptions');
 
 /* ***** RUTAS DE TRABAJOS ****** */
-Route::match(['get','post'],'work','WorkController@showWork');
+Route::match(['get','post'],'work','WorkController@worksMenu');
 Route::post('recordNewWork','WorkController@recordNewWork');
 Route::match(['get','post'],'worksList','WorkController@showWorksMenu');
 Route::post('searchWorksByOptions','WorkController@searchWorksByOptions');
