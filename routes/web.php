@@ -45,6 +45,7 @@ Route::post('createIva','IvaController@showIva');
 Route::post('deleteIva/{id?}','IvaController@deleteIva');
 Route::post('recordNewIva','IvaController@recordNewIva');
 Route::post('changeIva','IvaController@updateIva');
+Route::post('changeSettings','CompanyController@updateSettings');
 
 /* **** RUTAS DE CLIENTES **** */
 Route::match(['get','post'],'showCustomers','CustomerController@showListCustomers');
@@ -71,7 +72,7 @@ Route::post('showPdfWork/{id?}','WorkController@showPdfWork');
 
 /* ***** RUTAS DE FACTURAS ****** */
 Route::match(['get','post'],'invoicesMenu','InvoiceController@invoicesMenu');
-Route::post('worksList','InvoiceController@showWorksList');
+Route::post('worksToInvoicingList','InvoiceController@showWorksList');
 Route::post('generateInvoices','InvoiceController@createInvoices');
 Route::match(['get','post'],'invoicesList','InvoiceController@showInvoicesMenu');
 Route::post('searchInvoices','InvoiceController@invoicesList');

@@ -8,6 +8,7 @@ use Illuminate\Database\QueryException;
 
 use App\Company;
 use App\PaymentMethod;
+use App\Config;
 
 
 class CompanyController extends Controller
@@ -307,23 +308,139 @@ class CompanyController extends Controller
     
     
     /**
-     * Esta función muestra los settings de algunos elementos configurables de la 
+     * Esta función muestra los settings de los elementos configurables de la 
      * aplicación, correspondientes a la empresa con $id
      * @param type $id
      * @return type
      */
-    public function settings() {
+    public function settings(Request $request) {
+        
+        //mensajes
+        $messageOK=$messageWrong=null;
         
         //obtenemos el objeto usuario autenticado
         $idcomp=Auth::guard('')->user()->idcompany;
 
-        // obtenemos un objeto company en DDBB
-        $company= Company::findOrFail($idcomp); 
+        //obtenemos el id de la compañia
+        $idcompany= clearInput($request->input('companyid'));
+                    
+        // obtenemos las configuraciones de empresa
+        $configs= Config::where([
+            ['idcompany',$idcomp]
+        ])->get();
+        
+        // recuperamos la configuración en forma de array
+        // para enviar a la vista
+        $settings=array();
+        foreach ($configs as $config =>$value) {
+            $settings[$value['name']]=$value['value'];            
+        }
+
+        $messageOK='Configuraciones obtenidas';
+  
         
         // mostramos la vista
         return view('company/companySettings')
-            ->with('company',$company);            
+            ->with('settings',$settings)
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);                
    
     }
+
+
+    public function updateSettings(Request $request) {
+        
+        //mensajes
+        $messageOK=$messageWrong=null;
+        
+        //obtenemos el objeto usuario autenticado
+        $idcomp=Auth::guard('')->user()->idcompany;
+
+        //obtenemos el id de la compañia
+        $idcompany= clearInput($request->input('companyid'));
+        
+        // obtenemos el resto de valores de configuraciones
+        
+        // SI habilita la creación de usuarios, NO la deshabilita - por defecto es NO
+        (clearInput($request->input('createUsers'))=='Si') ? $createuser='Si'  : $createuser='No' ; 
+        // SI habilita la creación de roles, NO la deshabilita - por defecto es NO
+        (clearInput($request->input('usingRoles'))=='Si') ? $roles='Si'  : $roles='No' ;
+        // SI habilita la creación de empresa, NO la deshabilita - por defecto es NO
+        (clearInput($request->input('createCompanies'))=='Si') ? $createcomp='Si'  : $createcomp='No' ; 
+        // modo de crear albaranes: 1 es albarán por artículo, 2 es albarán multiartículo - por defecto es 1
+        (clearInput($request->input('workmode'))=='2') ? $wmode=2  : $wmode=1 ;
+        // prefijo de albaranes. maximo tamaño es 3
+        $wprefix= substr(clearInput($request->input('workPrefix')), 0,3);
+        // prefijo de comienzo de numero - 1 es comienzo aaaamm , 2 es ningún prefijo (0000) - por defecto es 1
+        (clearInput($request->input('worksprefix2'))=='2') ? $wprefixnum=2  : $wprefixnum=1 ;     
+        // longitud de número de albarán. entre 10 y 20 - 15 por defecto
+        $wlength= substr(clearInput($request->input('worknumLength')), 0,2);
+        if ($wlength < 10 || $wlength > 20) $wlength=15;
+
+        // Serie de la factura (max 3 chars) - empty por defecto
+        $iserial= substr(clearInput($request->input('invoicesSerial')), 0,3);        
+        // prefijo de comienzo de numero factura - 1 es comienzo aaaamm , 2 es ningún prefijo (0000) - por defecto es 1
+        (clearInput($request->input('invoicePrefix'))=='2') ? $iprefix=2  : $iprefix=1 ;    
+        // longitud de número de albarán. entre 10 y 20 - 15 por defecto
+        $ilength= substr(clearInput($request->input('invoicesLength')), 0,2);
+        if ($ilength < 10 || $ilength > 20) $ilength=15;        
+        // nota al pie de la factura -
+        $inote= substr(clearInput($request->input('invoiceNote')), 0,255);
+        
+        // comprobamos la pertenencia del usuario a la empresa que modifica
+        if ($idcomp == $idcompany) {
+            
+            // obtenemos las configuraciones de empresa
+            $configs= Config::where([
+                ['idcompany',$idcomp]
+            ])->get();
+            
+            // de momento, en la version lite, solo se permiten modificar 
+            // algunos parámetros, siendo los demás fijos
+            foreach ($configs as $config) {
+                if ($config->name=='invoiceNote') {
+                    // cambiamos la nota al pie de factura
+                    $configW= Config::find($config->id);
+                    $configW->value=$inote;
+                    $configW->save();                    
+                }
+                if ($config->name=='invoicePrefix') {
+                    // cambiamos el prefijo de factura
+                    $configW= Config::find($config->id);
+                    $configW->value=$iprefix;
+                    $configW->save();                    
+                }                                  
+                
+            }
+            
+            $messageOK='Configuraciones modificadas';
+            
+            // obtenemos las configuraciones de empresa
+            $configs= Config::where([
+                ['idcompany',$idcomp]
+            ])->get();
+
+            // recuperamos la configuración en forma de array
+            // para enviar a la vista
+            $settings=array();
+            foreach ($configs as $config =>$value) {
+                $settings[$value['name']]=$value['value'];            
+            }            
+            
+        } else {
+            $messageWrong='El usuario no pertenece a la empresa';
+            $settings=array();
+        }
+        
+        
+        // mostramos la vista
+        return view('company/companySettings')
+            ->with('settings',$settings)
+            ->with('messageOK',$messageOK)
+            ->with('messageWrong',$messageWrong);                
+   
+    }
+    
+    
 }
 

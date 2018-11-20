@@ -15,5 +15,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CompaniesSeeder::class);
         $this->call(PaymentMethodsSeeder::class);
         $this->call(IvaRatesSeeder::class);
+        $this->call(ConfigsSeeder::class);
     }
 }
