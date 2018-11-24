@@ -4,14 +4,14 @@ Esta aplicación web consiste en una aplicación de facturación en su versión 
 - Permite crear clientes con sus datos de facturación y forma de pago.
 - Permite crear diferentes formas de pago, con vencimientos y/o día de pago.
 - Maneja los 4 tipos de IVA usuales (exento, superreducido, reducido y general), y permite crear diferentes tipos si cambia el tipo de IVA
-- Pueden cambiarse determinadas configuraciones en settings, aunque esto es limitado en la version lite.
+- Pueden cambiarse determinadas configuraciones en settings, aunque esto está limitado en la version lite.
 - Puede generar y/o manejar albaranes e imprimirlos como pdfs. Permite la edición y el borrado de albaranes,si no están facturados.
-- Genera listas de albaranes facturados o sin facturar, y generar una lista en pdf.
+- Genera listas de albaranes facturados o sin facturar, y generar listas en pdf.
 - Emite facturas de forma individual o automatizadas, mediante selección en formulario.
-- Permite listar cada factura por pdf, así como obtener listados de facturación.
-- Permite obtener un listado de la facturación total por cliente.
+- Permite listar cada factura por pdf, así como obtener listados de facturación por pantalla o pdf.
+- Permite obtener listados de la facturación total por cliente, también por pantalla o pdf.
 
-CARACTERÍSTCAS TÉCNICAS Y REQUISITOS
+CARACTERÍSTICAS TÉCNICAS Y REQUISITOS
 - Desarrollada en Laravel 5.6
 - Requiere PHP 7.1.3 o superior
     OpenSSL PHP Extension
