@@ -66,7 +66,6 @@ Route::post('editWork/{id?}','WorkController@editWork');
 Route::post('deleteWork','WorkController@deleteWork');
 Route::post('deleteWork/{id?}','WorkController@deleteWorkFromList');
 Route::post('changeWork','WorkController@updateWork');
-Route::post('generateWork/{id?}','WorkController@generatePdfWork');
 Route::post('showPdfWork/{id?}','WorkController@showPdfWork');
 
 /* ***** RUTAS DE FACTURAS ****** */

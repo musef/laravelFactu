@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\App;
+use Mpdf\Mpdf;
 
 use App\Work;
 use App\Customer;
@@ -665,7 +665,22 @@ class WorkController extends Controller
                 html {
                   min-height: 100%;
                   position: relative;
-                }                
+                }
+                table {
+                    font-size:8px;
+                }
+                th {                   
+                    border:1px solid black;
+                    margin: 0px 0px 0px 0px;
+                    min-width:12%;
+                }
+                td {
+                    padding-left:5px;
+                    padding-right:5px;
+                }
+                .right {
+                    text-align:right;
+                }
                 </style>
             </head>
             <body style="width:1000px;">
@@ -679,53 +694,60 @@ class WorkController extends Controller
         // cuerpo de la factura
         $data.='
             <div style="min-height:500px;border:1px solid black" >
-                    <div style="width:100%;" >
-                        <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
-                        <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
-                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
-                    </div>';
+                <table>
+                    <tr>
+                        <th >Nº albarán</th>
+                        <th >Cliente</th>
+                        <th >Fecha</th>
+                        <th >Importe</th>
+                        <th >Concepto</th>
+                    </tr>                
+';
         $count=0;
         if (isset($works) && count($works)>0) {
             foreach ($works as $work) {
                 $data.='
-                            <div style="width:100%;" >                        
-                                <input type="text" value="'.$work->work_number.'" style="width:15%;height:50px;border:none;" >
-                                <input type="text" value="'.$work->name.'" style="width:25%;height:50px;border:none;text-align:left" >
-                                <input type="text" value="'.converterDate($work->work_date).'" style="width:12%;height:50px;border:none;text-align:center" >
-                                <input type="text" value="'.number_format($work->work_total,2,',','.').' €" style="width:12%;height:50px;border:none;;text-align:right" >
-                                <input type="text" value="'.$work->work_text.'" style="width:34.5%;height:50px;border:none;;text-align:left" >
-                            </div>';
+                    <tr>                       
+                       <td> <span style="width:10%">'.substr($work->work_number,0,15).'</span></td>
+                       <td> <span style="width:30%">'.substr($work->name,0,25).'</span></td>
+                       <td> <span style="width:10%">'.converterDate($work->work_date).'</span></td>
+                       <td class="right"> <span style="width:10%;text-align:right;">'.number_format($work->work_total,2,',','.').' </span></td>
+                       <td> <span style="width:40%">'.substr($work->work_text,0,75).'</span></td>
+                    </tr>';
                 $count++;
                 // paginamos
-                if ($count>=25) {
+                
+                if ($count>=45) {
                     // pie de la factura
                     $count=0;
-                    $data.='</div><br /><br />
+                    $data.='</table></div><br /><br />
 
                     <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
                     <h2>Listado de albaranes</h2>
                     <p>'.$textlist.'</p>
                     </div>
                     <div style="min-height:500px;border:1px solid black" >
-                        <div style="width:100%;" >
-                            <input type="text" value="Nº albarán" style="width:15%;height:50px;border:2px solid black" >
-                            <input type="text" value="Cliente" style="width:25%;height:50px;border:2px solid black" >
-                            <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                            <input type="text" value="Importe" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                            <input type="text" value="Concepto" style="width:34.7%;height:50px;border:2px solid black;text-align:left" >
-                        </div>';                
+                        <table>
+                            <tr>
+                                <th>Nº albarán</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Importe</th>
+                                <th>Concepto</th>
+                            </tr>';                
                 }
+
             }            
         } else {
-            $data.='                
-            <div style="width:100%;" >                        
-               <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
-            </div>';            
+            $data.='
+                </table>
+                
+                <div style="width:100%;" >                        
+                   <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
+                </div>';            
         }
 
-        $data.='</div>';
+        $data.='</table></div>';
         
         
         $data.='
@@ -738,11 +760,9 @@ class WorkController extends Controller
             </div>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data)
-                ->setOption('footer-center','Pagina [page] de [toPage]')
-                ->setOption('footer-left','Listado emitido el '.now());
-        return $pdf->inline();        
+        $this->showPdf($data);
+        
+        return;
         
     }    
     
@@ -1364,6 +1384,46 @@ class WorkController extends Controller
             <head>
                 <title>Mostrar albarán</title>
                 <meta charset="utf-8">
+                <style>
+                html {
+                  min-height: 100%;
+                  position: relative;
+                }
+                h2 {
+                    font-size:16px;
+                    margin-bottom:0px;
+                    margin-top:0px;
+                }
+                label {
+                    font-size:14px;
+                    margin-bottom:0px;
+                    margin-top:0px;
+                }                
+                table {
+                    font-size:16px;
+                }
+                th {                   
+                    border:1px solid black;
+                    margin: 0px 0px 0px 0px;
+                }
+                td {
+                    padding-left:5px;
+                    padding-right:5px;
+                }
+                .fieldlong {
+                    text-align:center;
+                    width:40%;
+                }
+                .fieldshort {
+                    width:10%;
+                }
+                .linesum {
+                    font-size:0.8em;
+                    font-weight:bold;
+                }
+                
+
+                </style>                
             </head>
             <body style="width:1000px;">
               <div style="width:100%;border:1px solid black">
@@ -1372,24 +1432,24 @@ class WorkController extends Controller
                     <div style="width:100%;border:1px solid black" >
 
                         <div style="width:50%"> 
-                            <h2 style="margin-bottom:0px;" >'.$company->company_name.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_address.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_zip.' - '.$company->company_city.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_nif.'</h2>
+                            <h2>'.$company->company_name.'</h2>
+                            <h2>'.$company->company_address.'</h2>
+                            <h2>'.$company->company_zip.' - '.$company->company_city.'</h2>
+                            <h2>'.$company->company_nif.'</h2>
                         </div>
 
                         <div style="margin-left:70%;"> 
                             <label> Cliente:</label> <br/>
-                            <label>'.$customer->customer_name.'</label></br>
-                            <label>'.$customer->customer_address.'</label></br>
-                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
-                            <label>'.$customer->customer_nif.'</label></br>
+                            <label>'.$customer->customer_name.'</label><br />
+                            <label>'.$customer->customer_address.'</label><br />
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label><br />
+                            <label>'.$customer->customer_nif.'</label><br />
                         </div>
 
                         <hr>
                         <br />
 
-                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1em;font-weight:bold">
                             <label>Albarán '.$work->work_number.'</label>
                             <label style="margin-left:75%">Fecha Albarán '.converterDate($work->work_date).'</label>
                         </div>
@@ -1399,45 +1459,43 @@ class WorkController extends Controller
         // cuerpo del albarán
         $data.='
             <div style="min-height:200px;" >
-                    <div style="width:100%;" >
-                        <h2>Detalle del albarán</h2>
-                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
+                <table>
+                    <tr>
+                        <th>Código</th>
+                        <th class="fieldshort">Uds</th>
+                        <th class="fieldlong">Concepto</th>
+                        <th class="fieldshort">% Iva</th>
+                        <th class="fieldshort">Precio</th>
+                        <th>Importe</th>                        
+                    </tr>                
 
-                    </div>';
-        
-        // paginamos líneas de 51 caracteres de longitud
-        $data.='    <div style="width:100%;" >                        
-                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                        <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
-                        <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
-                        <input type="text" value="'.number_format($rate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'"
-                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-                    </div>';            
+                    <tr>                       
+                       <td> <span> -- </span></td>
+                       <td> <span>'.number_format($work->work_qtt,2,',','.').'</span></td>
+                       <td> <span>'.substr($work->work_text,0,42).'</span></td>
+                       <td> <span>'.number_format($rate,2,',','.').' </span></td>
+                       <td> <span>'.number_format($work->work_price,2,',','.').'</span></td>
+                       <td> <span>'.number_format(($work->work_qtt*$work->work_price),2,',','.').'</span></td>
+                    </tr>';           
         
         // si el concepto excede de 51 chars., hacemos varias líneas
-        if (strlen($work->work_text) > 51) {
+        if (strlen($work->work_text) > 42) {
             $conceptlength= strlen($work->work_text);
-            for ($n=51;$n<$conceptlength;$n=$n+51) {
+            for ($n=42;$n<$conceptlength;$n=$n+42) {
                 // paginamos líneas de 51 caracteres de longitud
-                $data.='<div style="width:100%;" >                        
-                            <input type="text" value=" -- " style="width:10%;height:35px;border:none;" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
-                            <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                            <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
-                        </div>';
+                $data.='                        
+                    <tr>                       
+                       <td> <span> -- </span></td>
+                       <td> <span> </span></td>
+                       <td> <span>'.substr($work->work_text,$n,42).'</span></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                    </tr>';
             }            
         }
       
-        $data.='</div>';        
+        $data.='</table></div>';        
         
         // resumen importes de albarán       
         $bimp=$work->work_qtt*$work->work_price;
@@ -1446,224 +1504,27 @@ class WorkController extends Controller
         $data.='
             <br />
             <hr>
-            <div style="width:100%;font-size:1.2em;font-weight:bold" >
-                <label for="bimp">Base Imponible</label>
-                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
-                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
-                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
-                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
-                    style="width:10%;height:40px;border:2px solid black;text-align:center" >
-                <label for="ttl" style="margin-left:70px">Total Albarán</label>
-                <input type="text" name="ttl" value="'. number_format($work->work_total,2,',','.').'" 
-                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
-            </div>';
+                <table>
+                    <tr>
+                       <td class="linesum">Base Imponible</td>
+                       <td class="linesum">'.number_format($bimp,2,',','.').' </td>
+                       <td class="linesum"> | Cuota IVA</td>
+                       <td class="linesum"> '.number_format($cuota,2,',','.').' </td>
+                       <td class="linesum"> | Total Albarán</span></td>
+                       <td class="linesum"> '. number_format($work->work_total,2,',','.').' €</td>
+                    </tr>
+                </table>';                     
      
         // pie 
         $data.='</div></div>
             </body>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data);
-        return $pdf->inline();
-                
+        $this->showPdf($data,false);
+        return;
     }
     
-    
-    /**
-     * Esta función genera un fichero pdf con el albarán seleccionado
-     * @param Request $request
-     * @param type $id
-     * @return type
-     */
-    public function generatePdfWork(Request $request,$id=0) {
-        
-        // mensajes
-        $messageOK=$messageWrong=null;
-      
-        // tomamos el id de la factura por formulario, si es que estamos en edición
-        // individual de la factura
-        if ($request->has('workid') && clearInput($request->input('workid'))>0) 
-            $id=clearInput($request->input('workid'));
-        
-        // obtenemos la empresa del usuario
-        $idcomp=Auth::guard('')->user()->idcompany;        
-        
-        $work=new Work;
-        
-        try {
-            // obtenemos los datos de la empresa
-            $company=Company::find($idcomp);
-            
-            // obtenemos el albarán correspondiente al id
-            $work= Work::where([
-                ['id',$id],
-                ['idcompany',$idcomp]
-            ])->first();
-            
-            // obtenemos el tipo de iva del albarán
-            $rate= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['id',$work->idiva]
-            ])->first()->rate;
-            
-            // obtenemos el cliente del albarán
-            $customer= Customer::find($work->idcustomer);
-                       
-
-        } catch (Exception $ex) {
-            // generamos un objeto en blanco
-            $customers=null;
-            $messageWrong='Error obteniendo albarán para pdf';
-            // regreso al formulario
-            $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>0,'wknumber'=>''];             
-            return view('works/worksListBySelection')
-                ->with('customersSel',$customers)
-                ->with('parameters',$parameters)
-                ->with('totalList',0)                
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);            
-        } catch (QueryException $quex) {
-            // generamos un objeto en blanco
-            $customers=null;
-            $messageWrong='Error en base de datos obteniendo albarán para pdf - Error QW021';
-            // regreso al formulario
-            $parameters=['cust'=>0,'state'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>0,'wknumber'=>''];             
-            return view('works/worksListBySelection')
-                ->with('customersSel',$customers)
-                ->with('parameters',$parameters)
-                ->with('totalList',0)                
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);
-        }        
-               
-        
-        // cabecera del albarán
-        $data='
-            <head>
-                <title>Mostrar albarán</title>
-                <meta charset="utf-8">
-            </head>
-            <body style="width:1000px;">
-              <div style="width:100%;border:1px solid black">
-                <div style="width:99%; margin: 5px 5px 5px 5px;">
-
-                    <div style="width:100%;border:1px solid black" >
-
-                        <div style="width:50%"> 
-                            <h2 style="margin-bottom:0px;" >'.$company->company_name.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_address.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_zip.' - '.$company->company_city.'</h2>
-                            <h2 style="margin-bottom:0px;margin-top:5px;" >'.$company->company_nif.'</h2>
-                        </div>
-
-                        <div style="margin-left:70%;"> 
-                            <label> Cliente:</label> <br/>
-                            <label>'.$customer->customer_name.'</label></br>
-                            <label>'.$customer->customer_address.'</label></br>
-                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
-                            <label>'.$customer->customer_nif.'</label></br>
-                        </div>
-
-                        <hr>
-                        <br />
-
-                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
-                            <label>Albarán '.$work->work_number.'</label>
-                            <label style="margin-left:75%">Fecha Albarán '.converterDate($work->work_date).'</label>
-                        </div>
-
-                    </div>';
-        
-        // cuerpo del albarán
-        $data.='
-            <div style="min-height:200px;" >
-                    <div style="width:100%;" >
-                        <h2>Detalle del albarán</h2>
-                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
-
-                    </div>';
-        
-        // paginamos líneas de 51 caracteres de longitud
-        $data.='    <div style="width:100%;" >                        
-                        <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                        <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
-                        <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
-                        <input type="text" value="'.number_format($rate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
-                        <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
-                            style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-                    </div>';            
-        
-        // si el concepto excede de 51 chars., hacemos varias líneas
-        if (strlen($work->work_text) > 51) {
-            $conceptlength= strlen($work->work_text);
-            for ($n=51;$n<$conceptlength;$n=$n+51) {
-                // paginamos líneas de 51 caracteres de longitud
-                $data.='<div style="width:100%;" >                        
-                            <input type="text" value=" -- " style="width:10%;height:35px;border:none;" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
-                            <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                            <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                            <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
-                        </div>';
-            }            
-        }
-      
-        $data.='</div>';        
-        
-        // resumen importes de albarán       
-        $bimp=$work->work_qtt*$work->work_price;
-        $cuota=($work->work_qtt*$work->work_price)*$rate/100;
-        
-        $data.='
-            <br />
-            <hr>
-            <div style="width:100%;font-size:1.2em;font-weight:bold" >
-                <label for="bimp">Base Imponible</label>
-                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
-                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
-                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
-                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
-                    style="width:10%;height:40px;border:2px solid black;text-align:center" >
-                <label for="ttl" style="margin-left:70px">Total Albarán</label>
-                <input type="text" name="ttl" value="'. number_format($work->work_total,2,',','.').'" 
-                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
-            </div>';
-     
-        // pie 
-        $data.='</div></div>
-            </body>';
-
-        
-        // nombre del fichero a generar
-        $filename='Albaran'.$work->work_number;
-        
-        $snappy = App::make('snappy.pdf');
-        //To file
-        return   new \Illuminate\Http\Response(
-                $snappy->getOutputFromHtml($data),
-            200,
-            array(
-                'Content-Type'          => 'application/pdf',
-                'Content-Disposition'   => 'attachment; filename="'.$filename.'"'
-            )                
-                
-         );
-
-                
-    }
-    
-    
-    
+       
     
     
     /**
@@ -1744,6 +1605,36 @@ class WorkController extends Controller
             
         }        
         
+    }
+    
+    
+    /**
+     * Esta función fabrica un documento pdf suministrándole un html.
+     * El formato será un documento utf-8 en formato A4 portrait
+     * @param type $data
+     * @return type
+     */
+    private function showPdf($data, $generated=true) {
+        
+        // creamos el directorio temporal
+        $mpdf = new Mpdf([
+            'tempDir' => __DIR__ . '/tmp',
+            'mode' => 'utf-8', 
+            'format' => [190, 236],
+            'orientation' => 'P']);
+        
+        // generamos la fecha de emisión si true
+        if ($generated===true) $mpdf->SetHeader('Emitido el '.date('d-m-Y H:i:s',time()));
+                
+
+        // generamos el html
+        $mpdf->WriteHTML($data);
+
+        // Output a PDF file directly to the browser
+        $mpdf->Output();
+        
+        return;            
+            
     }
     
 }
