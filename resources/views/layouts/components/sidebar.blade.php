@@ -1,8 +1,7 @@
 <div class="col-md-3 left_col">
 	<div class="left_col scroll-view">
 		<div class="navbar nav_title" style="border: 0">
-                    <a class="navbar-brand" href="{{ url('/home') }}" style="font-size: 17px;">
-                        
+                    <a class="navbar-brand" href="{{ url('/factulogin') }}" style="font-size: 17px;">                        
                         <img src="{{ asset('/img/logo.png') }}" style='float: left;' class="img-responsive" width="30%" alt="logo Fmsfactu">
                     <span class='gda_title'>{{ config('app.name', 'Fmsfactu') }}</span>
                 </a>

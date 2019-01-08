@@ -19,14 +19,6 @@ class PaymentMethodsSeeder extends Seeder
             'created_at'=>date(now()),
             'updated_at'=>date(now())
         ]);
-        
-        DB::table('payment_methods')->insert([
-            'idcompany'=>1,
-            'payment_method'=>'TRANSFERENCIA A 90 DÍAS',
-            'diff'=> 90,
-            'payment_day'=>0,           
-            'created_at'=>date(now()),
-            'updated_at'=>date(now())
-        ]);        
+               
     }
 }
