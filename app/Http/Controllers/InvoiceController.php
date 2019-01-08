@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\App;
-
+use Mpdf\Mpdf;
 
 use App\Customer;
 use App\Work;
@@ -15,6 +14,7 @@ use App\PaymentMethod;
 use App\IvaRates;
 use App\Company;
 use App\Config;
+
 
 
 
@@ -770,6 +770,10 @@ class InvoiceController extends Controller
 
             try {
 
+                // si amount es cero, es que no se filtra por cantidad
+                // y entonces buscamos también negativos
+                if ($amount==0) $amount=-999999999;                
+                
                 // buscamos en DDBB
                 $invoices= Invoice::where([
                  ['invoices.idcustomer','LIKE',$idcustomer],
@@ -923,6 +927,10 @@ class InvoiceController extends Controller
         
         // verificamos que el usuario pertenece a la empresa
         if ($idcompany == $idcomp) {
+            
+            // si amount es cero, es que no se filtra por cantidad
+            // y entonces buscamos también negativos
+            if ($amount==0) $amount=-999999999;
 
             try {
 
@@ -1007,12 +1015,37 @@ class InvoiceController extends Controller
         // cabecera de la factura
         $data='
             <head>
-                <title>Listado facturas</title>
+                <title>Listado de facturas</title>
                 <meta charset="utf-8">
                 <style>
                 html {
                   min-height: 100%;
                   position: relative;
+                }
+                th {                   
+                    border:1px solid black;
+                }
+                td {
+                    padding-left:5px;
+                    padding-right:5px;
+                }
+                .right {
+                    text-align:right;
+                }
+                .left {
+                    text-align:left;
+                }
+                .center {
+                    text-align:center;
+                }                
+                .fieldlong {
+                    text-align:center;
+                    width:50%;
+                    font-size:0.8em;                    
+                }
+                .fieldshort {
+                    width:15%;
+                    font-size:0.8em;                    
                 }                
                 </style>
             </head>
@@ -1027,55 +1060,59 @@ class InvoiceController extends Controller
         // cuerpo de la factura
         $data.='
             <div style="min-height:500px;border:1px solid black" >
-                    <div style="width:100%;" >
-                        <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
-                        <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
-                        <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                    </div>';
+                <table>
+                    <tr>
+                        <th class="fieldshort">Nº factura</th>
+                        <th class="fieldlong">Cliente</th>
+                        <th class="fieldshort">Fecha</th>
+                        <th class="fieldshort">Importe</th>
+                        <th class="fieldshort">Vencimiento</th>
+                    </tr>';
         
         $count=0;
         if (isset($invoices) && count($invoices)>0) {
             foreach ($invoices as $invoice) {
                 $data.='
-                        <div style="width:100%;" >                        
-                            <input type="text" value="'.$invoice->inv_number.'" style="width:15%;height:50px;border:none;" >
-                            <input type="text" value="'.$invoice->name.'" style="width:44%;height:50px;border:none;text-align:left" >
-                            <input type="text" value="'.converterDate($invoice->inv_date).'" style="width:12%;height:50px;border:none;text-align:center" >
-                            <input type="text" value="'.number_format($invoice->inv_total,2,',','.').' €" style="width:15%;height:50px;border:none;;text-align:right" >
-                            <input type="text" value="'.converterDate($invoice->inv_expiration).'" style="width:12%;height:50px;border:none;;text-align:center" >
-                        </div>';
+                    <tr>                       
+                       <td class="fieldshort">'.substr($invoice->inv_number,0,15).'</td>
+                       <td class="fieldlong left">'.substr($invoice->name,0,25).'</td>
+                       <td class="fieldshort center">'.converterDate($invoice->inv_date).'</td>
+                       <td class="fieldshort right">'.number_format($invoice->inv_total,2,',','.').'</td>
+                       <td class="fieldshort center">'.converterDate($invoice->inv_expiration).'</td>
+                    </tr>';
                 $count++;
                 // paginamos
-                if ($count>=25) {
+                if ($count>=45) {
                     // pie de la factura
                     $count=0;
-                    $data.='</div><br /><br />
+                    $data.='</table></div><br /><br />
 
                     <div style="width:100%; margin: 0px 5px 5px 0px;border:1px solid black">
                     <h2>Listado de facturas</h2>
                     <p>'.$textlist.'</p>
                     </div>
                     <div style="min-height:500px;border:1px solid black" >
-                        <div style="width:100%;" >
-                            <input type="text" value="Nº factura" style="width:15%;height:50px;border:2px solid black" >
-                            <input type="text" value="Cliente" style="width:44%;height:50px;border:2px solid black" >
-                            <input type="text" value="Fecha" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                            <input type="text" value="Importe" style="width:15%;height:50px;border:2px solid black;text-align:center" >
-                            <input type="text" value="Vencimiento" style="width:12%;height:50px;border:2px solid black;text-align:center" >
-                        </div>';               
+                        <table>
+                            <tr>
+                                <th class="fieldshort">Nº factura</th>
+                                <th class="fieldlong">Cliente</th>
+                                <th class="fieldshort">Fecha</th>
+                                <th class="fieldshort">Importe</th>
+                                <th class="fieldshort">Vencimiento</th>
+                            </tr>';             
                 }            
             }
+            // cerramos tabla
+            $data.='</table></div>';
+            
         } else {
-            $data.='                
-            <div style="width:100%;" >                        
-               <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
-            </div>';            
+            $data.='</table>            
+                <div style="width:100%;" >                        
+                   <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
+                </div>
+            </div>';                 
         }        
-        $data.='</div>';
-        
-        
+
         $data.='
             <br />
             <hr>
@@ -1086,11 +1123,8 @@ class InvoiceController extends Controller
             </div>';
      
         // generamos un pdf en vista directa sobre la pantalla actual
-        $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data)
-                ->setOption('footer-center','Pagina [page] de [toPage]')
-                ->setOption('footer-left','Listado emitido el '.now());
-        return $pdf->inline();              
+        $this->generatePdfDocumentInvoice($data, false, true);
+        return;          
         
     }
     
@@ -1337,6 +1371,34 @@ class InvoiceController extends Controller
                 html {
                   min-height: 100%;
                   position: relative;
+                }
+                h1 {
+                    font-size:18px;                
+                }
+                h3 {
+                    font-size:14px;
+                }         
+                table {
+                    font-size:16px;
+                }
+                th {                   
+                    border:1px solid black;
+                    margin: 0px 0px 0px 0px;
+                }
+                td {
+                    padding-left:5px;
+                    padding-right:5px;
+                }
+                .fieldlong {
+                    text-align:center;
+                    width:40%;
+                }
+                .fieldshort {
+                    width:10%;
+                }
+                .linesum {
+                    font-size:0.8em;
+                    font-weight:bold;
                 }                
                 </style>
             </head>
@@ -1347,26 +1409,25 @@ class InvoiceController extends Controller
                     <div style="width:100%;border:1px solid black" >
 
                         <div style="width:50%"> 
-                            <h1>'.$company->company_name.'</h1>
-                            <h2>'.$company->company_address.'</h2>
-                            <h2>'.$company->company_zip.' - '.$company->company_city.'</h2>
-                            <h2>'.$company->company_nif.'</h2>
+                            <h1 style="margin: 0;">'.$company->company_name.'</h1>
+                            <h3 style="margin: 0;">'.$company->company_address.'</h3>
+                            <h3 style="margin: 0;">'.$company->company_zip.' - '.$company->company_city.'</h3>
+                            <h3 style="margin: 0;">'.$company->company_nif.'</h3>
                         </div>
 
                         <div style="margin-left:70%;"> 
                             <label> Cliente:</label> <br/>
-                            <label>'.$customer->customer_name.'</label></br>
-                            <label>'.$customer->customer_address.'</label></br>
-                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
-                            <label>'.$customer->customer_nif.'</label></br>
+                            <label>'.$customer->customer_name.'</label><br/>
+                            <label>'.$customer->customer_address.'</label><br/>
+                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label><br/>
+                            <label>'.$customer->customer_nif.'</label><br/>
                         </div>
 
                         <hr>
                         <br />
 
-                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
-                            <label>Factura '.$invoice->inv_number.'</label>
-                            <label style="margin-left:75%">Fecha Factura '.converterDate($invoice->inv_date).'</label>
+                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold; display:inline-block">
+                            <label>Factura '.$invoice->inv_number.'   -  Fecha Factura '.converterDate($invoice->inv_date).'</label>
                         </div>
 
                     </div>';
@@ -1374,45 +1435,57 @@ class InvoiceController extends Controller
         // cuerpo de la factura
         $data.='
             <div style="min-height:500px;" >
-                    <div style="width:100%;" >
-                        <h2>Detalle de factura</h2>
-                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
-
-                    </div>';
-        
-        foreach ($works as $work) {
-            $data.='
-                <div style="width:100%;" >                        
-                    <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                    <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
-                    <input type="text" value="'.substr($work->work_text,0,51).'" style="width:40%;height:50px;border:none;text-align:left" >
-                    <input type="text" value="'.number_format($work->ivaRate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                    <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
-                    <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
-                        style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-                </div>';            
+                <table>
+                    <tr>
+                        <th>Código</th>
+                        <th class="fieldshort">Uds</th>
+                        <th class="fieldlong">Concepto</th>
+                        <th class="fieldshort">% Iva</th>
+                        <th class="fieldshort">Precio</th>
+                        <th>Importe</th>                        
+                    </tr>';
+            $count=0;
+            foreach ($works as $work) {
+                $count++;
+                $data.='
+                    <tr>                       
+                       <td> <span> -- </span></td>
+                       <td> <span>'.number_format($work->work_qtt,2,',','.').'</span></td>
+                       <td> <span>'.substr($work->work_text,0,42).'</span></td>
+                       <td> <span>'.number_format($work->ivaRate,2,',','.').' </span></td>
+                       <td> <span>'.number_format($work->work_price,2,',','.').'</span></td>
+                       <td> <span>'.number_format(($work->work_qtt*$work->work_price),2,',','.').'</span></td>
+                    </tr>';
+                // si el concepto excede de 51 chars., hacemos varias líneas
+                if (strlen($work->work_text) > 42) {
+                    $conceptlength= strlen($work->work_text);
+                    for ($n=42;$n<$conceptlength;$n=$n+42) {
+                        $count++;
+                        // paginamos líneas de 51 caracteres de longitud
+                        $data.='<tr>
+                           <td> <span> -- </span></td>
+                           <td> <span> </span></td>
+                           <td> <span>'.substr($work->work_text,$n,42).'</span></td>
+                           <td> <span> </span></td>
+                           <td> <span> </span></td>
+                           <td> <span> </span></td>
+                           </tr>';
+                    }            
+                }                
             }
-            // si el concepto excede de 51 chars., hacemos varias líneas
-            if (strlen($work->work_text) > 51) {
-                $conceptlength= strlen($work->work_text);
-                for ($n=51;$n<$conceptlength;$n=$n+51) {
-                    // paginamos líneas de 51 caracteres de longitud
-                    $data.='<div style="width:100%;" >                        
-                                <input type="text" value="" style="width:10%;height:35px;border:none;" >
-                                <input type="text" value="" style="width:10%;height:35px;border:none;text-align:center" >
-                                <input type="text" value="'.substr($work->work_text,$n,51).'" style="width:40%;height:35px;border:none;text-align:left" >
-                                <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                                <input type="text" value="" style="width:10%;height:35px;border:none;;text-align:center" >
-                                <input type="text" value="" style="width:16%;height:35px;border:none;margin-right:10px;text-align:right" >
-                            </div>';
-                }            
-            }        
-            $data.='</div>';
+            
+            for ($n=$count;$n<14;$n++) {
+                $data.='
+                    <tr>                       
+                       <td> <br /></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                       <td> <span> </span></td>
+                    </tr>';                
+            }            
+            $data.='</table></div>';
         
         // resumen importe de factura
         // los desgloses de cuotas se muestran si la factura tiene 2 o más tipos de iva
@@ -1478,23 +1551,23 @@ class InvoiceController extends Controller
         $data.='
             <br />
             <hr>
-            <div style="width:100%;font-size:1.2em;font-weight:bold" >
+            <div style="width:100%;font-size:0.85em;font-weight:bold" >
                 <label for="bimp">Base Imponible</label>
                 <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
-                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
+                    style="width:19%;height:40px;border:2px solid black;text-align:center" >
                 <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
                 <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
-                    style="width:10%;height:40px;border:2px solid black;text-align:center" >    
+                    style="width:12%;height:40px;border:2px solid black;text-align:center" >    
                 <label for="ttl" style="margin-left:70px">Total Factura</label>                     
                 <input type="text" name="ttl" value="'. number_format($invoice->inv_total,2,',','.').'" 
-                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
+                    style="width:19%;height:50px;border:2px solid black;text-align:center" >
             </div>
             <br />
             <div style="width:100%" >               
                 <input type="text" value="Vencimiento de factura: '.converterDate($invoice->inv_expiration).'" 
-                    style="width:60%;height:50px;text-align:left;border:none" >
-                <input type="text" value="importe total a pagar...: '. number_format($invoice->inv_total,2,',','.').' euros" 
-                    style="width:35%;height:50px;text-align:center;border:none" >
+                    style="width:55%;height:50px;text-align:left;border:none" >
+                <input type="text" value="importe total a pagar...: '. number_format($invoice->inv_total,2,',','.').' €" 
+                    style="width:40%;height:50px;text-align:center;border:none" >
             </div>';
      
         // pie de la factura
@@ -1502,303 +1575,18 @@ class InvoiceController extends Controller
         // obtenemos el pie de las configuraciones de empresa        
         $pie=$this->getInvoiceFooter($idcomp);
         
-        $data.='
-            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
-            <p>'.$pie.'</p>
-            </div>
-      
+        $data.='      
             </div>
         </body>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data);
-        return $pdf->inline();
+        $this->generatePdfDocumentInvoice($data, $pie, false);
+        
+        return;
                 
     }
     
-    
-    /**
-     * Esta función genera un fichero pdf con la factura seleccionada
-     * @param Request $request
-     * @param type $id
-     * @return type
-     */
-    public function generatePdfInvoice(Request $request,$id=0) {
-        
-        // mensajes
-        $messageOK=$messageWrong=null;
-      
-        // tomamos el id de la factura por formulario, si es que estamos en edición
-        // individual de la factura
-        if ($request->has('invoiceid') && clearInput($request->input('invoiceid'))>0) 
-            $id=clearInput($request->input('invoiceid'));
-        
-        // obtenemos la empresa del usuario
-        $idcomp=Auth::guard('')->user()->idcompany;        
-        
-        $invoice=new Invoice;
-        
-        try {
-            // obtenemos los datos de la empresa
-            $company=Company::find($idcomp);
-            
-            // obtenemos la factura correspondiente al id
-            $invoice= Invoice::where([
-                ['id',$id],
-                ['idcompany',$idcomp]
-            ])->first();
-            
-            // obtenemos los tipos de iva de la factura
-            $rate0= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['id',$invoice->idiva0]
-            ])->first()->rate;
-            $rate1= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['id',$invoice->idiva1]
-            ])->first()->rate;
-            $rate2= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['id',$invoice->idiva2]
-            ])->first()->rate;
-            $rate3= IvaRates::where([
-                ['idcompany',$idcomp],
-                ['id',$invoice->idiva3]
-            ])->first()->rate;
-            
-            // obtenemos el cliente de la factura
-            $customer= Customer::find($invoice->idcustomer);
-            
-            //obtenemos la lista de albaranes de esa factura
-            $works= Work::where([
-                ['works.idinvoice',$invoice->id],
-                ['works.idcompany',$idcomp]                
-            ])
-                ->leftJoin('iva_rates','iva_rates.id','works.idiva')
-                ->select('works.*','iva_rates.rate as ivaRate')
-                    ->get();
-            
-            // obtenemos los clientes de la empresa
-            $customers= Customer::where('idcompany',$idcomp)
-                ->orderBy('customer_name')                    
-                ->get();
-
-        } catch (Exception $ex) {
-            // generamos un objeto en blanco
-            $customers=null;
-            $messageWrong='Error obteniendo generando un fichero pdf';
-            // parametros de búsqueda
-            $parameters=['cust'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>'','invnumber'=>''];                
-            return view('invoices/invoicesListBySelection')
-                ->with('invoices',null)
-                ->with('customersSel',null)
-                ->with('parameters',$parameters) 
-                ->with('totalList',0)                 
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);             
-        } catch (QueryException $quex) {
-            // generamos un objeto en blanco
-            $customers=null;
-            $messageWrong='Error en base de datos generando un fichero pdf - Error QI014';
-            // parametros de búsqueda
-            $parameters=['cust'=>0,'fechini'=> '',
-                'fechfin'=> '','amount'=>'','invnumber'=>''];                
-            return view('invoices/invoicesListBySelection')
-                ->with('invoices',null)
-                ->with('customersSel',null)
-                ->with('parameters',$parameters) 
-                ->with('totalList',0)                 
-                ->with('messageOK',null)
-                ->with('messageWrong',$messageWrong);             
-        }        
-               
-        // cabecera de la factura
-        $data='
-            <head>
-                <meta charset="utf-8">
-                <style>
-                html {
-                  min-height: 100%;
-                  position: relative;
-                }                
-                </style>
-            </head>
-            <body style="width:1000px;border:1px solid black">
-            
-                <div style="width:99%; margin: 5px 5px 5px 5px;">
-
-                    <div style="width:100%;border:1px solid black" >
-
-                        <div style="width:50%"> 
-                            <h1>'.$company->company_name.'</h1>
-                            <h2>'.$company->company_address.'</h2>
-                            <h2>'.$company->company_zip.' - '.$company->company_city.'</h2>
-                            <h2>'.$company->company_nif.'</h2>
-                        </div>
-
-                        <div style="margin-left:70%;"> 
-                            <label> Cliente:</label> <br/>
-                            <label>'.$customer->customer_name.'</label></br>
-                            <label>'.$customer->customer_address.'</label></br>
-                            <label>'.$customer->customer_zip.' - '.$customer->customer_city.'</label></br>
-                            <label>'.$customer->customer_nif.'</label></br>
-                        </div>
-
-                        <hr>
-                        <br />
-
-                        <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1.2em;font-weight:bold">
-                            <label>Factura '.$invoice->inv_number.'</label>
-                            <label style="margin-left:75%">Fecha Factura '.converterDate($invoice->inv_date).'</label>
-                        </div>
-
-                    </div>';
-        
-        // cuerpo de la factura
-        $data.='
-            <div style="min-height:500px;" >
-                    <div style="width:100%;" >
-                        <h2>Detalle de factura</h2>
-                        <input type="text" value="Código" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Unidades" style="width:10%;height:50px;border:2px solid black" >
-                        <input type="text" value="Concepto" style="width:40%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Tipo Iva" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Precio" style="width:10%;height:50px;border:2px solid black;text-align:center" >
-                        <input type="text" value="Importe" style="width:18%;height:50px;border:2px solid black;text-align:center" >
-
-                    </div>';
-        
-        foreach ($works as $work) {
-        $data.='
-            <div style="width:100%;" >                        
-                <input type="text" value=" -- " style="width:10%;height:50px;border:none;" >
-                <input type="text" value="'.number_format($work->work_qtt,2,',','.').'" style="width:10%;height:50px;border:none;text-align:center" >
-                <input type="text" value="'.$work->work_text.'" style="width:40%;height:50px;border:none;text-align:left" >
-                <input type="text" value="'.number_format($work->ivaRate,2,',','.').' %" style="width:10%;height:50px;border:none;;text-align:center" >
-                <input type="text" value="'.number_format($work->work_price,2,',','.').'" style="width:10%;height:50px;border:none;;text-align:center" >
-                <input type="text" value="'.number_format(($work->work_qtt*$work->work_price),2,',','.').'" 
-                    style="width:16%;height:50px;border:none;margin-right:10px;text-align:right" >
-            </div>';
-            
-        }
-        $data.='</div>';
-        
-        // resumen importe de factura
-        // los desgloses de cuotas se muestran si la factura tiene 2 o más tipos de iva
-        $counttypes=0;
-        $data2='<br />';        
-        if ($invoice->inv_base0>0) {
-            $data2.='
-            <div style="width:100%;" >
-                <label for="bimp0">Base Imponible al '.number_format((100*$invoice->inv_cuota0/$invoice->inv_base0),2,',','.').' % ..:</label>
-                <input type="text" name="bimp0" value="'.number_format($invoice->inv_base0,2,',','.').' €" style="width:20%;height:40px; border:none" >
-                <label for="tipo0">Tipo IVA</label>                  
-                <input type="text" name="tipo0" value="'.number_format($rate0,2,',','.').' %" style="width:20%;height:40px; border:none" >                    
-                <label for="cuot0">Cuota IVA</label>                  
-                <input type="text" name="cuot0" value="'.number_format($invoice->inv_cuota0,2,',','.').' €" style="width:20%;height:40px; border:none" >
-            </div>';
-            $counttypes++;
-        }
-        if ($invoice->inv_cuota1>0) {
-            $data2.='
-            <div style="width:100%;" >
-                <label for="bimp1">Base Imponible al '.number_format((100*$invoice->inv_cuota1/$invoice->inv_base1),2,',','.').' % ..:</label>
-                <input type="text" name="bimp1" value="'.number_format($invoice->inv_base1,2,',','.').' €" style="width:20%;height:40px; border:none" >
-                <label for="tipo1">Tipo IVA</label>                  
-                <input type="text" name="tipo1" value="'.number_format($rate1,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
-                <label for="cuot1">Cuota IVA</label>                  
-                <input type="text" name="cuot1" value="'.number_format($invoice->inv_cuota1,2,',','.').' €" style="width:20%;height:40px; border:none" >
-            </div>';
-            $counttypes++;
-        }
-        if ($invoice->inv_cuota2>0) {
-            $data2.='
-            <div style="width:100%;" >
-                <label for="bimp2">Base Imponible al '.number_format((100*$invoice->inv_cuota2/$invoice->inv_base2),2,',','.').' % ..:</label>
-                <input type="text" name="bimp2" value=" '.number_format($invoice->inv_base2,2,',','.').' €" style="width:20%;height:40px; border:none" >
-                <label for="tipo2">Tipo IVA</label>                  
-                <input type="text" name="tipo2" value="'.number_format($rate2,2,',','.').' %" style="width:20%;height:40px; border:none" >                   
-                <label for="cuot2">Cuota IVA</label>                  
-                <input type="text" name="cuot2" value="'.number_format($invoice->inv_cuota2,2,',','.').' €" style="width:20%;height:40px; border:none" >
-            </div>';
-            $counttypes++;            
-        }
-        if ($invoice->inv_cuota3>0) {
-            $data2.='
-            <div style="width:100%;" >
-                <label for="bimp3">Base Imponible al '.number_format((100*$invoice->inv_cuota3/$invoice->inv_base3),2,',','.').' % ..:</label>
-                <input type="text" name="bimp3" value="'.number_format($invoice->inv_base3,2,',','.').' €" style="width:20%;height:40px; border:none">
-                <label for="tipo3">Tipo IVA</label>                  
-                <input type="text" name="tipo3" value="'.number_format($rate3,2,',','.').' %" style="width:20%;height:40px; border:none" >                     
-                <label for="cuot3">Cuota IVA</label>                  
-                <input type="text" name="cuot3" value="'.number_format($invoice->inv_cuota3,2,',','.').' €" style="width:20%;height:40px; border:none" >
-            </div>';
-            $counttypes++;            
-        }        
-        
-        // si hay dos o más tipos de iva, se muestra el desglose
-        if ($counttypes>1) {
-            $data.=$data2;            
-        }
-        
-        $bimp=$invoice->inv_base0+$invoice->inv_base1+$invoice->inv_base2+$invoice->inv_base3;
-        $cuota=$invoice->inv_cuota0+$invoice->inv_cuota1+$invoice->inv_cuota2+$invoice->inv_cuota3;
-        
-        $data.='
-            <br />
-            <hr>
-            <div style="width:100%;font-size:1.2em;font-weight:bold" >
-                <label for="bimp">Base Imponible</label>
-                <input type="text" name="bimp" value="'.number_format($bimp,2,',','.').'" 
-                    style="width:20%;height:40px;border:2px solid black;text-align:center" >
-                <label for="cuot" style="margin-left:20px" >Cuota IVA</label>                    
-                <input type="text" name="cuot" value="'.number_format($cuota,2,',','.').'" 
-                    style="width:10%;height:40px;border:2px solid black;text-align:center" >    
-                <label for="ttl" style="margin-left:70px">Total Factura</label>                     
-                <input type="text" name="ttl" value="'. number_format($invoice->inv_total,2,',','.').'" 
-                    style="width:20%;height:50px;border:2px solid black;text-align:center" >
-            </div>
-            <br />
-            <div style="width:100%" >               
-                <input type="text" value="Vencimiento de factura: '.converterDate($invoice->inv_expiration).'" 
-                    style="width:60%;height:50px;text-align:left;border:none" >
-                <input type="text" value="importe total a pagar...: '. number_format($invoice->inv_total,2,',','.').' euros" 
-                    style="width:35%;height:50px;text-align:center;border:none" >
-            </div>';
-     
-        // pie de la factura
-        
-        // obtenemos el pie de las configuraciones de empresa        
-        $pie=$this->getInvoiceFooter($idcomp);
-        
-        $data.='
-            <div style="width:98%;border:1px solid black;position:absolute;bottom: 20px;" >
-            <p>'.$pie.'</p>
-            </div>
-      
-            </div>
-        </body>';
-        
-        // nombre del fichero a generar
-        $filename='Factura'.$invoice->inv_number;
-        
-        $snappy = App::make('snappy.pdf');
-        //To file
-        return   new \Illuminate\Http\Response(
-                $snappy->getOutputFromHtml($data),
-            200,
-            array(
-                'Content-Type'          => 'application/pdf',
-                'Content-Disposition'   => 'attachment; filename="'.$filename.'"'
-            )                
-                
-         );
-
-                
-    }
-    
+ 
     
     /**
      * Esta función muestra el menú de listado de sumatorio de facturas emitidas
@@ -1918,11 +1706,10 @@ class InvoiceController extends Controller
                  ])
                      ->leftJoin('customers','customers.id','invoices.idcustomer')                       
                      ->select('invoices.idcustomer','customers.customer_name as name')
-                     ->groupBy('invoices.idcustomer')                        
+                     ->groupBy('invoices.idcustomer','customers.customer_name')                        
                      ->orderBy('customers.customer_name')
-                     ->get(); 
-                              
-                
+                     ->get();
+
                 // procesamos la lista, sumando cada base, cuota y el total,
                 // cliente por cliente
                 
@@ -2036,7 +1823,7 @@ class InvoiceController extends Controller
             } catch (QueryException $quex) {
                 // generamos un objeto en blanco
                 $customers=null;
-                $messageWrong='Error en base de datos generando listado resumen facturación de clientes - Error QI016';               
+                $messageWrong='Error en base de datos generando listado resumen facturación de clientes - Error QI016'; 
             }
             
         } else {            
@@ -2150,115 +1937,116 @@ class InvoiceController extends Controller
                  ])
                      ->leftJoin('customers','customers.id','invoices.idcustomer')                       
                      ->select('invoices.idcustomer','customers.customer_name as name')
-                     ->groupBy('invoices.idcustomer')                        
+                     ->groupBy('invoices.idcustomer','customers.customer_name')                        
                      ->orderBy('customers.customer_name')
-                     ->get(); 
+                     ->get();
                 
                 // variables acumuladas
                 $sumtot=$sumbas0=$sumcuo0=$sumbas1=$sumcuo1=$sumbas2=$sumcuo2=$sumbas3=$sumcuo3=0;
-                
-                foreach ($customersList as $custom) {
-                    
-                    $totalList = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')
-                        ->sum('invoices.inv_total');
-                    $base0List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_base0');
-                    $base1List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_base1');
-                    $base2List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_base2');
-                    $base3List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_base3');          
-                    $cuota0List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_cuota0');
-                    $cuota1List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_cuota1');
-                    $cuota2List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]            
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_cuota2');
-                    $cuota3List = Invoice::where([
-                     ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
-                     ['invoices.idcompany',$idcompany],
-                     ['invoices.inv_date','>=',$fechini],
-                     ['invoices.inv_date','<',$fechfin]        
-                     ])
-                         ->select('invoices.*','invoices.idcustomer')
-                         ->groupBy('invoices.idcustomer')                    
-                        ->sum('invoices.inv_cuota3');                    
-          
-                    // preparamos el array con los datos de cada cliente
-                    $arr=array('id'=>$custom['idcustomer'],'name'=>$custom['name'],'total'=>$totalList,
-                        'base0'=>$base0List,'base1'=>$base1List,'base2'=>$base2List,'base3'=>$base3List,
-                        'cuota0'=>$cuota0List,'cuota1'=>$cuota1List,'cuota2'=>$cuota2List,'cuota3'=>$cuota3List);
-                    $invoices[]=$arr;
-                
-                    // acumulamos los diferentes subtotales
-                    $sumtot+=$totalList;
-                    $sumcuo0+=$cuota0List;
-                    $sumbas0+=$base0List;
-                    $sumcuo1+=$cuota1List;
-                    $sumbas1+=$base1List;
-                    $sumcuo2+=$cuota2List;
-                    $sumbas2+=$base2List;
-                    $sumcuo3+=$cuota3List;
-                    $sumbas3+=$base3List;                    
+                if (isset($customersList) && count($customersList)>0) {
+                    foreach ($customersList as $custom) {
+
+                        $totalList = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')
+                            ->sum('invoices.inv_total');
+                        $base0List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_base0');
+                        $base1List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_base1');
+                        $base2List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_base2');
+                        $base3List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_base3');          
+                        $cuota0List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_cuota0');
+                        $cuota1List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_cuota1');
+                        $cuota2List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]            
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_cuota2');
+                        $cuota3List = Invoice::where([
+                         ['invoices.idcustomer','LIKE',$custom['idcustomer'] ],
+                         ['invoices.idcompany',$idcompany],
+                         ['invoices.inv_date','>=',$fechini],
+                         ['invoices.inv_date','<',$fechfin]        
+                         ])
+                             ->select('invoices.*','invoices.idcustomer')
+                             ->groupBy('invoices.idcustomer')                    
+                            ->sum('invoices.inv_cuota3');                    
+
+                        // preparamos el array con los datos de cada cliente
+                        $arr=array('id'=>$custom['idcustomer'],'name'=>$custom['name'],'total'=>$totalList,
+                            'base0'=>$base0List,'base1'=>$base1List,'base2'=>$base2List,'base3'=>$base3List,
+                            'cuota0'=>$cuota0List,'cuota1'=>$cuota1List,'cuota2'=>$cuota2List,'cuota3'=>$cuota3List);
+                        $invoices[]=$arr;
+
+                        // acumulamos los diferentes subtotales
+                        $sumtot+=$totalList;
+                        $sumcuo0+=$cuota0List;
+                        $sumbas0+=$base0List;
+                        $sumcuo1+=$cuota1List;
+                        $sumbas1+=$base1List;
+                        $sumcuo2+=$cuota2List;
+                        $sumbas2+=$base2List;
+                        $sumcuo3+=$cuota3List;
+                        $sumbas3+=$base3List;                    
+                    }
                 }
-                
+
                 
             } catch (Exception $ex) {
                 // generamos un objeto en blanco
@@ -2313,10 +2101,35 @@ class InvoiceController extends Controller
                 html {
                   min-height: 100%;
                   position: relative;
+                }    
+                th {                   
+                    border:1px solid black;
+                }
+                td {
+                    padding-left:5px;
+                    padding-right:5px;
+                }
+                .right {
+                    text-align:right;
+                }
+                .left {
+                    text-align:left;
                 }                
+                .boldt {
+                    font-weight:bold;
+                }                
+                .fieldlong {
+                    text-align:center;
+                    width:40%;
+                    font-size:0.8em;                    
+                }
+                .fieldshort {
+                    width:15%;
+                    font-size:0.8em;                    
+                }            
                 </style>
             </head>
-            <body style="width:1000px;border:1px solid black">
+            <body style="width:100%;border:1px solid black">
             
                 <div style="width:99%; margin: 5px 5px 5px 5px;">
 
@@ -2328,47 +2141,47 @@ class InvoiceController extends Controller
                        
         // cuerpo de la factura
         $data.='
-            <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
+            <table style="border:1px solid black;width:100%">
                 <tr>   
-                        <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                        <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
-                        <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+                        <td class="fieldlong left boldt"><label>Cliente</label></td>
+                        <td class="fieldshort right boldt"><label>Base</label></td>
+                        <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                        <td class="fieldshort right boldt"><label>Base</label></td>
+                        <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                        <td class="fieldshort right boldt"><label>Base</label></td>
+                        <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                        <td class="fieldshort right boldt"><label>Base</label></td>
+                        <td class="fieldshort right boldt"><label>Cuota</label></td>                        
+                        <td class="fieldshort right boldt"><label>Total</label></td>
 
                 </tr>
                 <tr>
-                        <td style="height:18px;font-weight:bold;"><label></label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                        <td style="height:18px;font-weight:bold;"><label>General</label></td> 
-                        <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
-                        <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
+                        <td class="fieldlong left boldt"><label></label></td>
+                        <td class="fieldshort right boldt"><label>Exenta</label></td>
+                        <td class="fieldshort right boldt"><label>Exenta</label></td>
+                        <td class="fieldshort right boldt"><label>Superred.</label></td>
+                        <td class="fieldshort right boldt"><label>Superred.</label></td>
+                        <td class="fieldshort right boldt"><label>Reducida</label></td>
+                        <td class="fieldshort right boldt"><label>Reducida</label></td>
+                        <td class="fieldshort right boldt"><label>General</label></td> 
+                        <td class="fieldshort right boldt"><label>General</label></td>                       
+                        <td class="fieldshort right boldt"><label>Facturación</label></td>
                 </tr>';        
         $count=0;
-        if (!is_null($invoices)) {            
+        if (!is_null($invoices)) {
             foreach ($invoices as $invoice) {
                 $data.='
                         <tr>                     
-                            <td colspan="1" style="text-align:left"><label>'.substr($invoice['name'],0,35).'</label ></td>
-                            <td><label>'.number_format($invoice['base0'],2,',','.').'</label ></td>
-                            <td><label>'.number_format($invoice['cuota0'],2,',','.').'</label ></td> 
-                            <td><label>'.number_format($invoice['base1'],2,',','.').'</label ></td>
-                            <td><label>'.number_format($invoice['cuota1'],2,',','.').'</label ></td> 
-                            <td><label>'.number_format($invoice['base2'],2,',','.').'</label ></td>
-                            <td><label>'.number_format($invoice['cuota2'],2,',','.').'</label ></td> 
-                            <td><label>'.number_format($invoice['base3'],2,',','.').'</label ></td>
-                            <td><label>'.number_format($invoice['cuota3'],2,',','.').'</label ></td>                        
-                            <td><label>'.number_format($invoice['total'],2,',','.').'</label ></td>
+                            <td class="fieldlong left"><label>'.substr($invoice['name'],0,22).'</label ></td>
+                            <td class="fieldshort right"><label>'.number_format($invoice['base0'],2,',','.').'</label ></td>
+                            <td class="fieldshort right"><label>'.number_format($invoice['cuota0'],2,',','.').'</label ></td> 
+                            <td class="fieldshort right"><label>'.number_format($invoice['base1'],2,',','.').'</label ></td>
+                            <td class="fieldshort right"><label>'.number_format($invoice['cuota1'],2,',','.').'</label ></td> 
+                            <td class="fieldshort right"><label>'.number_format($invoice['base2'],2,',','.').'</label ></td>
+                            <td class="fieldshort right"><label>'.number_format($invoice['cuota2'],2,',','.').'</label ></td> 
+                            <td class="fieldshort right"><label>'.number_format($invoice['base3'],2,',','.').'</label ></td>
+                            <td class="fieldshort right"><label>'.number_format($invoice['cuota3'],2,',','.').'</label ></td>                        
+                            <td class="fieldshort right"><label>'.number_format($invoice['total'],2,',','.').'</label ></td>
                         </tr>';
                 $count++;
                 // paginamos
@@ -2381,32 +2194,32 @@ class InvoiceController extends Controller
                     <h2>Listado de facturación por cliente</h2>
                     <p>'.$textlist.'</p>
                     </div>
-                    <table style="font-size:0.8em;text-align:right;border:1px solid black;width:100%">
+                    <table style="border:1px solid black;width:100%">
                         <tr>   
-                                <td colspan="1" style="height:18px;text-align:left;width:25%;font-weight:bold;"><label>Cliente</label></td>
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>  
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Base</label></td>
-                                <td style="height:18px;text-align:right;width:8%;font-weight:bold;"><label>Cuota</label></td>                        
-                                <td style="height:18px;text-align:right;width:11%;font-weight:bold;"><label>Total</label></td>
+                                <td class="fieldlong left boldt"><label>Cliente</label></td>
+                                <td class="fieldshort right boldt"><label>Base</label></td>
+                                <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                                <td class="fieldshort right boldt"><label>Base</label></td>
+                                <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                                <td class="fieldshort right boldt"><label>Base</label></td>
+                                <td class="fieldshort right boldt"><label>Cuota</label></td>  
+                                <td class="fieldshort right boldt"><label>Base</label></td>
+                                <td class="fieldshort right boldt"><label>Cuota</label></td>                        
+                                <td class="fieldshort right boldt"><label>Total</label></td>
 
                         </tr>
                         <tr>
-                                <td style="height:18px;font-weight:bold;"><label></label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Exenta</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Superreducida</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>Reducida</label></td>
-                                <td style="height:18px;font-weight:bold;"><label>General</label></td> 
-                                <td style="height:18px;font-weight:bold;"><label>General</label></td>                       
-                                <td style="height:18px;font-weight:bold;"><label>Facturación</label></td>
-                        </tr>';               
+                                <td class="fieldlong left boldt"><label></label></td>
+                                <td class="fieldshort right boldt"><label>Exenta</label></td>
+                                <td class="fieldshort right boldt"><label>Exenta</label></td>
+                                <td class="fieldshort right boldt"><label>Superred.</label></td>
+                                <td class="fieldshort right boldt"><label>Superred.</label></td>
+                                <td class="fieldshort right boldt"><label>Reducida</label></td>
+                                <td class="fieldshort right boldt"><label>Reducida</label></td>
+                                <td class="fieldshort right boldt"><label>General</label></td> 
+                                <td class="fieldshort right boldt"><label>General</label></td>                       
+                                <td class="fieldshort right boldt"><label>Facturación</label></td>
+                        </tr>';              
                 }            
             }
         } else {
@@ -2420,25 +2233,23 @@ class InvoiceController extends Controller
                     <td colspan="10"><hr></td>
                 </tr>
                 <tr>                     
-                    <td style="height:18px;font-weight:bold;"><label>Sumas .........</label ></td>
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas0,2,',','.').'</label ></td>
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo0,2,',','.').'</label ></td> 
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas1,2,',','.').'</label ></td>
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo1,2,',','.').'</label ></td> 
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas2,2,',','.').'</label ></td>
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo2,2,',','.').'</label ></td> 
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumbas3,2,',','.').'</label ></td>
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumcuo3,2,',','.').'</label ></td>                        
-                    <td style="height:18px;font-weight:bold;"><label>'.number_format($sumtot,2,',','.').'</label ></td>
+                    <td class="fieldshort right boldt"><label>Sumas .........</label ></td>
+                    <td class="fieldshort right boldt"><label>'.number_format($sumbas0,2,',','.').'</label ></td>
+                    <td class="fieldshort right boldt"><label>'.number_format($sumcuo0,2,',','.').'</label ></td> 
+                    <td class="fieldshort right boldt"><label>'.number_format($sumbas1,2,',','.').'</label ></td>
+                    <td class="fieldshort right boldt"><label>'.number_format($sumcuo1,2,',','.').'</label ></td> 
+                    <td class="fieldshort right boldt"><label>'.number_format($sumbas2,2,',','.').'</label ></td>
+                    <td class="fieldshort right boldt"><label>'.number_format($sumcuo2,2,',','.').'</label ></td> 
+                    <td class="fieldshort right boldt"><label>'.number_format($sumbas3,2,',','.').'</label ></td>
+                    <td class="fieldshort right boldt"><label>'.number_format($sumcuo3,2,',','.').'</label ></td>                        
+                    <td class="fieldshort right boldt"><label>'.number_format($sumtot,2,',','.').'</label ></td>
                 </tr>
                 </div></table>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $pdf = App::make('snappy.pdf.wrapper');        
-        $pdf->loadHTML($data)
-                ->setOption('footer-center','Pagina [page] de [toPage]')
-                ->setOption('footer-left','Listado emitido el '.now());
-        return $pdf->inline();
+        $this->generatePdfDocument($data,true);
+        
+        return;
         
     }
     
@@ -2832,5 +2643,91 @@ class InvoiceController extends Controller
         
     }
     
+    
+    
+    /**
+     * Esta función fabrica un documento pdf suministrándole un html.
+     * El formato será un documento utf-8 en formato A4 portrait
+     * @param type $data
+     * @return type
+     */
+    private function generatePdfDocument($data, $generated=true) {
+        
+        // creamos el directorio temporal
+        $mpdf = new Mpdf([
+            'tempDir' => __DIR__ . '/tmp',
+            'mode' => 'utf-8', 
+           'format' => [210, 297],
+            'orientation' => 'P']);
+        
+        // generamos la fecha de emisión si true
+        if ($generated===true) $mpdf->SetHeader('Emitido el '.date('d-m-Y H:i:s',time()));
+                
+
+        // generamos el html
+        $mpdf->WriteHTML($data);
+
+        // Output a PDF file directly to the browser
+        $mpdf->Output();
+        
+        return;            
+            
+    }
+    
+    /**
+     * Esta función fabrica un documento pdf suministrándole un html.
+     * El formato será un documento utf-8 en formato A4 portrait
+     * @param type $data
+     * @return type
+     */
+    private function generatePdfDocumentInvoice($data, $pie=false, $generated=true) {
+        
+        // creamos el directorio temporal
+        $mpdf = new Mpdf([
+            'tempDir' => __DIR__ . '/tmp',
+            'mode' => 'utf-8', 
+            'format' => [210, 297],
+            'orientation' => 'P']);
+        
+        // generamos la fecha de emisión si true
+        if ($generated===true) $mpdf->SetHeader('Emitido el '.date('d-m-Y H:i:s',time()));
+        
+        if ($pie!==false) {
+            $footer = array (
+                'L' => array (
+                    'content' => '',
+                    'font-size' => 6,
+                    'font-style' => 'B',
+                    'font-family' => 'serif',
+                    'color'=>'#000000'
+                ),
+                'C' => array (
+                    'content' => $pie,
+                    'font-size' => 6,
+                    'font-style' => 'B',
+                    'font-family' => 'serif',
+                    'color'=>'#000000'
+                ),
+                'R' => array (
+                    'content' => '',
+                    'font-size' => 6,
+                    'font-style' => 'B',
+                    'font-family' => 'serif',
+                    'color'=>'#000000'
+                ),                
+                'line' => 1
+            );
+            $mpdf->SetFooter($footer,'O');
+        }
+
+        // generamos el html
+        $mpdf->WriteHTML($data);
+
+        // Output a PDF file directly to the browser
+        $mpdf->Output();
+        
+        return;            
+            
+    }    
     
 }
