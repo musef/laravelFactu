@@ -47,7 +47,7 @@
                       <label class="col-md-2 col-sm-2 col-xs-12" >Cliente: </label>
                       <div class="form-group col-md-10 col-sm-10 col-xs-12" >
                           <select name="customerid" id="customerid" class="form-group col-md-12 col-sm-12 col-xs-12" 
-                                  style="height: 34px" onchange="submit()">
+                                  style="height: 34px" onchange="submit()" >
                               <option value="0">Seleccione...</option>
                               @if (isset($customers) && count($customers)>0)
                                 @foreach ($customers as $customer)
@@ -116,7 +116,7 @@
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="col-md-3 col-sm-3 col-xs-12">Cantidad </label>
                       <div class="col-md-9 col-sm-9 col-xs-12">
-                          <input name='workqtt' id='workqtt' class="form-control" type="text" pattern="[0-9.,]{0,9}" {{$disabled}} 
+                          <input name='workqtt' id='workqtt' class="form-control" type="text" pattern="[0-9.,-]{0,9}" {{$disabled}} 
                                  value="{{$work->work_qtt}}" title="cantidad a facturar" required >
                       </div>
                     </div>
@@ -147,7 +147,7 @@
                     <div class="form-group col-md-3 col-sm-3 col-xs-3">
                       <label class="control-label col-md-3 col-sm-3 col-xs-12">Total </label>
                       <div class="col-md-9 col-sm-9 col-xs-12">
-                          <input name='worktotal' id='worktotal' class="form-control" type="text" pattern="[0-9.,]{0,9}" {{$disabled}}
+                          <input name='worktotal' id='worktotal' class="form-control" type="text" pattern="[0-9.,-]{0,9}" {{$disabled}}
                                  value="{{$work->work_total}}" title="Total" required >
                       </div>
                     </div>                  
@@ -207,7 +207,7 @@
                   <div class="col-md-4 col-sm-4 col-xs-12 text-center" >
                     @if (isset($work->id) && $work->id > 0)
                     <div class="col-md-8 col-sm-8 col-xs-12 text-left" >                          
-                      <button type="submit" class="btn btn-success"  formaction="{{url('showPdfWork')}}" {{$disabled}}
+                      <button type="submit" class="btn btn-success"  formaction="{{url('showPdfWork')}}" 
                               title="Mostrar albarán en PDF">
                           <i class="fa fa-eye"></i> Generar PDF</button>
                     </div>

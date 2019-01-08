@@ -19,7 +19,7 @@ Auth::routes();
 
 Route::get('factulogin',function(){
     return view('auth/factulogin');    
-});
+})->name('factulogin');
 
 
 Route::get('/home', 'HomeController@index')->name('home');
@@ -77,7 +77,6 @@ Route::post('searchInvoices','InvoiceController@invoicesList');
 Route::post('searchInvoicesPdf','InvoiceController@invoicesPdfList');
 Route::post('showInvoice/{id?}','InvoiceController@showInvoice');
 Route::post('deleteInvoice','InvoiceController@deleteInvoice');
-Route::post('generateInvoice/{id?}','InvoiceController@generatePdfInvoice');
 Route::post('showPdfInvoice/{id?}','InvoiceController@showPdfInvoice');
 Route::match(['get','post'],'customerInvoicesList','InvoiceController@customerInvoicesMenu');
 Route::post('showSumatoryInvoices','InvoiceController@showSumatoryInvoices');

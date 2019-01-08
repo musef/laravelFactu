@@ -400,6 +400,10 @@ class WorkController extends Controller
         // verificamos que el usuario pertenece a la empresa
         if ($idcompany == $idcomp) {
 
+            // si amount es cero, es que no se filtra por cantidad
+            // y entonces buscamos también negativos
+            if ($amount==0) $amount=-999999999;
+            
             try {
 
                 // buscamos en DDBB
@@ -584,6 +588,10 @@ class WorkController extends Controller
 
             try {
 
+                // si amount es cero, es que no se filtra por cantidad
+                // y entonces buscamos también negativos
+                if ($amount==0) $amount=-999999999;                
+                
                 // buscamos en DDBB
                 // listado por numero de albaran
                 $works=Work::where([
@@ -666,21 +674,38 @@ class WorkController extends Controller
                   min-height: 100%;
                   position: relative;
                 }
-                table {
-                    font-size:8px;
-                }
                 th {                   
                     border:1px solid black;
-                    margin: 0px 0px 0px 0px;
-                    min-width:12%;
                 }
                 td {
                     padding-left:5px;
                     padding-right:5px;
+                    text-align:center;                    
                 }
+                .fieldlong {
+                    text-align:center;
+                    width:40%;
+                    font-size:0.8em;
+                }
+                .fieldmedium {
+                    text-align:center;
+                    width:25%;
+                    font-size:0.8em;
+                }                
+                .fieldshort {
+                    width:12%;
+                    font-size:0.8em;                    
+                }
+                .linesum {
+                    font-size:0.8em;
+                    font-weight:bold;
+                }                
                 .right {
                     text-align:right;
                 }
+                .left {
+                    text-align:left;
+                }                
                 </style>
             </head>
             <body style="width:1000px;">
@@ -693,26 +718,25 @@ class WorkController extends Controller
         
         // cuerpo de la factura
         $data.='
-            <div style="min-height:500px;border:1px solid black" >
+            <div style="min-height:500px;width:100%;border:1px solid black" >
                 <table>
-                    <tr>
-                        <th >Nº albarán</th>
-                        <th >Cliente</th>
-                        <th >Fecha</th>
-                        <th >Importe</th>
-                        <th >Concepto</th>
-                    </tr>                
-';
+                    <tr>                   
+                        <th class="fieldshort">Nº albarán</th>
+                        <th class="fieldmedium">Cliente</th>
+                        <th class="fieldshort">Fecha</th>
+                        <th class="fieldshort">Importe</th>
+                        <th class="fieldlong">Concepto</th>
+                    </tr>';
         $count=0;
         if (isset($works) && count($works)>0) {
             foreach ($works as $work) {
                 $data.='
                     <tr>                       
-                       <td> <span style="width:10%">'.substr($work->work_number,0,15).'</span></td>
-                       <td> <span style="width:30%">'.substr($work->name,0,25).'</span></td>
-                       <td> <span style="width:10%">'.converterDate($work->work_date).'</span></td>
-                       <td class="right"> <span style="width:10%;text-align:right;">'.number_format($work->work_total,2,',','.').' </span></td>
-                       <td> <span style="width:40%">'.substr($work->work_text,0,75).'</span></td>
+                       <td class="fieldshort">'.substr($work->work_number,0,15).'</td>
+                       <td class="fieldmedium left">'.substr($work->name,0,20).'</td>
+                       <td class="fieldshort">'.converterDate($work->work_date).'</td>
+                       <td class="fieldshort right">'.number_format($work->work_total,2,',','.').'</td>
+                       <td class="fieldlong left" >'.substr($work->work_text,0,50).'</td>
                     </tr>';
                 $count++;
                 // paginamos
@@ -729,38 +753,39 @@ class WorkController extends Controller
                     <div style="min-height:500px;border:1px solid black" >
                         <table>
                             <tr>
-                                <th>Nº albarán</th>
-                                <th>Cliente</th>
-                                <th>Fecha</th>
-                                <th>Importe</th>
-                                <th>Concepto</th>
+                                <th class="fieldshort">Nº albarán</th>
+                                <th class="fieldmedium">Cliente</th>
+                                <th class="fieldshort">Fecha</th>
+                                <th class="fieldshort">Importe</th>
+                                <th class="fieldlong">Concepto</th>
                             </tr>';                
                 }
 
-            }            
+            }   
+            // cerramos tabla
+            $data.='</table></div>';
         } else {
             $data.='
                 </table>
                 
                 <div style="width:100%;" >                        
                    <input type="text" value="No se ha obtenido ningún dato" style="width:100%;height:50px;border:none;" >
-                </div>';            
+                </div>
+            </div>';            
         }
 
-        $data.='</table></div>';
-        
-        
+
         $data.='
             <br />
             <hr>
             <br />
             <div style="width:100%;font-weight:bold;font-size:1.4em;" >               
-                <input type="text" value="Total importes ...: '. number_format($totalList,2,',','.').' euros" 
+                <input type="text" value="Total importes ...: '.number_format($totalList,2,',','.').' euros" 
                     style="width:50%;height:50px;text-align:center;border:none" >
             </div>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $this->showPdf($data);
+        $this->generatePdfDocument($data);
         
         return;
         
@@ -1400,7 +1425,7 @@ class WorkController extends Controller
                     margin-top:0px;
                 }                
                 table {
-                    font-size:16px;
+                    font-size:14px;
                 }
                 th {                   
                     border:1px solid black;
@@ -1411,15 +1436,21 @@ class WorkController extends Controller
                     padding-right:5px;
                 }
                 .fieldlong {
-                    text-align:center;
+                    font-size:0.8em;
+                    text-align:left;
                     width:40%;
                 }
                 .fieldshort {
+                    font-size:0.8em;
+                    text-align:center;
                     width:10%;
                 }
                 .linesum {
                     font-size:0.8em;
                     font-weight:bold;
+                }
+                .right {
+                    text-align:right;                
                 }
                 
 
@@ -1438,7 +1469,7 @@ class WorkController extends Controller
                             <h2>'.$company->company_nif.'</h2>
                         </div>
 
-                        <div style="margin-left:70%;"> 
+                        <div style="margin-left:70%;font-size:0.8em;"> 
                             <label> Cliente:</label> <br/>
                             <label>'.$customer->customer_name.'</label><br />
                             <label>'.$customer->customer_address.'</label><br />
@@ -1451,7 +1482,7 @@ class WorkController extends Controller
 
                         <div style="width:95%; margin: 5px 5px 5px 5px;font-size:1em;font-weight:bold">
                             <label>Albarán '.$work->work_number.'</label>
-                            <label style="margin-left:75%">Fecha Albarán '.converterDate($work->work_date).'</label>
+                            <label style="float:right;">  -  Fecha Albarán: '.converterDate($work->work_date).'</label>
                         </div>
 
                     </div>';
@@ -1461,7 +1492,7 @@ class WorkController extends Controller
             <div style="min-height:200px;" >
                 <table>
                     <tr>
-                        <th>Código</th>
+                        <th class="fieldshort">Código</th>
                         <th class="fieldshort">Uds</th>
                         <th class="fieldlong">Concepto</th>
                         <th class="fieldshort">% Iva</th>
@@ -1470,27 +1501,27 @@ class WorkController extends Controller
                     </tr>                
 
                     <tr>                       
-                       <td> <span> -- </span></td>
-                       <td> <span>'.number_format($work->work_qtt,2,',','.').'</span></td>
-                       <td> <span>'.substr($work->work_text,0,42).'</span></td>
-                       <td> <span>'.number_format($rate,2,',','.').' </span></td>
-                       <td> <span>'.number_format($work->work_price,2,',','.').'</span></td>
-                       <td> <span>'.number_format(($work->work_qtt*$work->work_price),2,',','.').'</span></td>
+                       <td class="fieldshort" > -- </td>
+                       <td class="fieldshort right" >'.number_format($work->work_qtt,2,',','.').'</td>
+                       <td class="fieldlong" >'.substr($work->work_text,0,50).'</td>
+                       <td class="fieldshort right" >'.number_format($rate,2,',','.').' </td>
+                       <td class="fieldshort right" >'.number_format($work->work_price,2,',','.').'</td>
+                       <td class="fieldshort right" >'.number_format(($work->work_qtt*$work->work_price),2,',','.').'</td>
                     </tr>';           
         
         // si el concepto excede de 51 chars., hacemos varias líneas
-        if (strlen($work->work_text) > 42) {
+        if (strlen($work->work_text) > 50) {
             $conceptlength= strlen($work->work_text);
-            for ($n=42;$n<$conceptlength;$n=$n+42) {
+            for ($n=50;$n<$conceptlength;$n=$n+50) {
                 // paginamos líneas de 51 caracteres de longitud
                 $data.='                        
                     <tr>                       
-                       <td> <span> -- </span></td>
-                       <td> <span> </span></td>
-                       <td> <span>'.substr($work->work_text,$n,42).'</span></td>
-                       <td> <span> </span></td>
-                       <td> <span> </span></td>
-                       <td> <span> </span></td>
+                       <td class="fieldshort" > -- </td>
+                       <td class="fieldshort" > </td>
+                       <td class="fieldlong" >'.substr($work->work_text,$n,50).'</td>
+                       <td class="fieldshort" > </td>
+                       <td class="fieldshort" > </td>
+                       <td class="fieldshort" > </td>
                     </tr>';
             }            
         }
@@ -1504,13 +1535,13 @@ class WorkController extends Controller
         $data.='
             <br />
             <hr>
-                <table>
+                <table style="width:100%">
                     <tr>
-                       <td class="linesum">Base Imponible</td>
+                       <td class="linesum">Base Imponible:</td>
                        <td class="linesum">'.number_format($bimp,2,',','.').' </td>
-                       <td class="linesum"> | Cuota IVA</td>
+                       <td class="linesum"> |  Cuota IVA:</td>
                        <td class="linesum"> '.number_format($cuota,2,',','.').' </td>
-                       <td class="linesum"> | Total Albarán</span></td>
+                       <td class="linesum"> |  Total Albarán:</span></td>
                        <td class="linesum"> '. number_format($work->work_total,2,',','.').' €</td>
                     </tr>
                 </table>';                     
@@ -1520,7 +1551,7 @@ class WorkController extends Controller
             </body>';
         
         // generamos un pdf en vista directa sobre la pantalla actual
-        $this->showPdf($data,false);
+        $this->generatePdfDocument($data,false);
         return;
     }
     
@@ -1614,13 +1645,13 @@ class WorkController extends Controller
      * @param type $data
      * @return type
      */
-    private function showPdf($data, $generated=true) {
+    private function generatePdfDocument($data, $generated=true) {
         
         // creamos el directorio temporal
         $mpdf = new Mpdf([
             'tempDir' => __DIR__ . '/tmp',
             'mode' => 'utf-8', 
-            'format' => [190, 236],
+           'format' => [210, 297],
             'orientation' => 'P']);
         
         // generamos la fecha de emisión si true
