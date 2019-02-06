@@ -1449,7 +1449,7 @@ class InvoiceController extends Controller
                 $count++;
                 $data.='
                     <tr>                       
-                       <td> <span> -- </span></td>
+                       <td> <span>'.$work->work_code.'</span></td>
                        <td> <span>'.number_format($work->work_qtt,2,',','.').'</span></td>
                        <td> <span>'.substr($work->work_text,0,42).'</span></td>
                        <td> <span>'.number_format($work->ivaRate,2,',','.').' </span></td>

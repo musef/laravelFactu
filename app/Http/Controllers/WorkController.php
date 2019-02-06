@@ -1501,7 +1501,7 @@ class WorkController extends Controller
                     </tr>                
 
                     <tr>                       
-                       <td class="fieldshort" > -- </td>
+                       <td class="fieldshort" >'.$work->work_code.'</td>
                        <td class="fieldshort right" >'.number_format($work->work_qtt,2,',','.').'</td>
                        <td class="fieldlong" >'.substr($work->work_text,0,50).'</td>
                        <td class="fieldshort right" >'.number_format($rate,2,',','.').' </td>

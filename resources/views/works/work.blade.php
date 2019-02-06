@@ -78,14 +78,21 @@
                 </div>
                 
                 <div class="form-group col-md-12 col-sm-12 col-xs-12" >
-                    <div class="form-group col-md-4 col-sm-4 col-xs-4" style="margin-top: 20px">
+                    <div class="form-group col-md-3 col-sm-3 col-xs-3" style="margin-top: 20px">
                       <label class="col-md-2 col-sm-2 col-xs-12">Número</label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                           <input name='worknumber' id='worknumber' class="form-control" type="text" value="{{$work->work_number}}" 
                                  minlength="3" maxlength="15" readonly="readonly">
                       </div>
                     </div>
-                    <div class="form-group col-md-4 col-sm-4 col-xs-4" style="margin-top: 20px">
+                    <div class="form-group col-md-3 col-sm-3 col-xs-3" style="margin-top: 20px">
+                      <label class="col-md-2 col-sm-2 col-xs-12">Código</label>
+                      <div class="col-md-10 col-sm-10 col-xs-12">
+                          <input name='worknumber' id='worknumber' class="form-control" type="text" value="{{$work->work_code}}" 
+                                 minlength="3" maxlength="15" readonly="readonly">
+                      </div>
+                    </div>                    
+                    <div class="form-group col-md-3 col-sm-3 col-xs-3" style="margin-top: 20px">
                       <label class="control-label col-md-2 col-sm-2 col-xs-12">Fecha </label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                           <input name='workdate' id='workdate' class="form-control" type="text" value="{{$work->work_date}}" {{$disabled}}
@@ -93,7 +100,7 @@
                                  title="Introduzca una fecha con formato dd-mm-aaaa" >
                       </div>
                     </div>
-                    <div class="form-group col-md-4 col-sm-4 col-xs-4" style="margin-top: 20px">
+                    <div class="form-group col-md-3 col-sm-3 col-xs-3" style="margin-top: 20px">
                       <label class="control-label col-md-2 col-sm-2 col-xs-12">Factura </label>
                       <div class="col-md-10 col-sm-10 col-xs-12">
                           <input name='workinvoice' id='workinvoice' class="form-control" type="text" value="{{$work->invoicenumber}}" 
